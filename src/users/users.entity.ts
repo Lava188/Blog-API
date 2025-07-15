@@ -3,7 +3,7 @@ import { Post } from '../posts/posts.entity';
 
 @Entity('users')
 export class User {
-    @PrimaryGeneratedColumn('uuid') id: string;
+    @PrimaryGeneratedColumn() id: number;
     @Column({unique: true}) email: string;
     @Column() password: string;
     @OneToMany(() => Post, post => post.author) posts: Post[];    
