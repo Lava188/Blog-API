@@ -23,6 +23,11 @@ export class UsersController {
         return this.svc.findOne(id);    
     }
 
+    @Get(':email')
+    findByEmail(@Param('email') email: string) {
+        return this.svc.findByEmail(email);
+    }
+
     @Patch(':id')
     @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
     update(@Param('id') id: string, @Body() dto: UpdateUserDto) {

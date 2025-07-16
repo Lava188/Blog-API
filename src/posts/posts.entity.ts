@@ -3,7 +3,7 @@ import { User } from '../users/users.entity';
 
 @Entity('posts')
 export class Post {
-  @PrimaryGeneratedColumn('uuid') id: string;
+  @PrimaryGeneratedColumn() id: number;
 
   @Column() title: string;
   @Column('text') content: string;

@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { User } from './users/users.entity';
 import { Post } from './posts/posts.entity';
 import { Comment } from './comments/comments.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { Comment } from './comments/comments.entity';
       entities: [User, Post, Comment],
       synchronize: true,
     }),
-    UsersModule
+    UsersModule, 
+    AuthModule  
   ],
   controllers: [AppController],
   providers: [AppService],

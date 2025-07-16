@@ -1,10 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-
-@Entity('comments')
 export class CreateCommentDto {
-  @PrimaryGeneratedColumn() id: number;
-  @Column() content: string;
-  @Column({ type: 'uuid' }) postId: string;
-  @Column({ type: 'uuid' }) authorId: string;
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+
+  @IsUUID()
+  postId: string;
+
+  @IsUUID()
+  authorId: string;
 }
