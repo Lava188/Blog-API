@@ -7,6 +7,7 @@ import { User } from './users/users.entity';
 import { Post } from './posts/posts.entity';
 import { Comment } from './comments/comments.entity';
 import { AuthModule } from './auth/auth.module';
+import { RolesGuard } from './common/roles.guard';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { AuthModule } from './auth/auth.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: '',
+      password: '', 
       database: 'blog_api',
       entities: [User, Post, Comment],
       synchronize: true,
@@ -24,6 +25,12 @@ import { AuthModule } from './auth/auth.module';
     AuthModule  
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: 'APP_GUARD',
+      useClass: RolesGuard,
+    }
+  ],
 })
 export class AppModule {}

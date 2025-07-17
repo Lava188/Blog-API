@@ -8,8 +8,8 @@ export class Post {
   @Column() title: string;
   @Column('text') content: string;
 
-  @Column({ type: 'uuid' })
-  authorId: string;
+  @Column()
+  authorId: number;
 
   @ManyToOne(() => User, user => user.posts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'authorId' })
