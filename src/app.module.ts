@@ -8,6 +8,8 @@ import { Post } from './posts/posts.entity';
 import { Comment } from './comments/comments.entity';
 import { AuthModule } from './auth/auth.module';
 import { RolesGuard } from './common/roles.guard';
+import { CommentsModule } from './comments/comments.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -16,13 +18,16 @@ import { RolesGuard } from './common/roles.guard';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: '', 
+      password: '',
       database: 'blog_api',
       entities: [User, Post, Comment],
+      autoLoadEntities: true,
       synchronize: true,
     }),
-    UsersModule, 
-    AuthModule  
+    UsersModule,
+    AuthModule,
+    CommentsModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -30,7 +35,7 @@ import { RolesGuard } from './common/roles.guard';
     {
       provide: 'APP_GUARD',
       useClass: RolesGuard,
-    }
+    },
   ],
 })
 export class AppModule {}

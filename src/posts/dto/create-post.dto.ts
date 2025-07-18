@@ -1,21 +1,12 @@
-import { User } from "src/users/users.entity";
-import { Column, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
-    @PrimaryGeneratedColumn()
-    id: number;
-    
-    @Column()
-    title: string;
+  @IsString({ message: 'Title must be a string' })
+  @IsNotEmpty({ message: 'Title cannot be empty' })
+  @MaxLength(255, { message: 'Title cannot exceed 100 characters' })
+  title: string;
 
-    @Column('text')
-    content: string;
-
-    @Column()
-    authorId: string;
-    
-    @ManyToOne(() => User, user => user.posts, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'authorId' })
-    author: User;
+  @IsString({ message: 'Content must be a string' })
+  @IsNotEmpty({ message: 'Content cannot be empty' })
+  content: string;
 }

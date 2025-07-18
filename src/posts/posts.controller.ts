@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Patch,
+  Delete,
+  Request,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -9,29 +18,34 @@ import { RolesGuard } from '../common/roles.guard';
 
 @Controller('posts')
 export class PostsController {
-    constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) {}
 
-    @UseGuards(AuthGuard('jwt'))
-    @Post()
-    createPost(@Body() createPostDto: CreatePostDto, @Request() req) {
-        return this.postsService.create(createPostDto, req.user.id);
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async createPost(@Body() createPostDto: CreatePostDto, @Request() req) {
+    try {
+      return await this.postsService.create(createPostDto, req.user.id);
+    } catch (err) {
+      console.error('[POST /posts] createPost error:', err);
+      throw err;
     }
+  }
 
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.USER, Role.ADMIN)
-    @Patch(':id')
-    updatePost(
-        @Param('id') id: number,
-        @Body() editPostDto: EditPostDto,
-        @Request() req,
-    ) {
-        return this.postsService.update(id, editPostDto, req.user);
-    }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.USER, Role.ADMIN)
+  @Patch(':id')
+  updatePost(
+    @Param('id') id: number,
+    @Body() editPostDto: EditPostDto,
+    @Request() req,
+  ) {
+    return this.postsService.update(id, editPostDto, req.user);
+  }
 
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.ADMIN)
-    @Delete(':id')
-    deletePost(@Param('id') id: number, @Request() req) {
-        return this.postsService.remove(id, req.user);
-    }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  deletePost(@Param('id') id: number, @Request() req) {
+    return this.postsService.remove(id, req.user);
+  }
 }
