@@ -10,6 +10,7 @@ import { User } from '../users/users.entity';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
 import { Like } from 'src/likes/likes.entity';
+import { LikeDto } from 'src/likes/dto/like.dto';
 
 @Injectable()
 export class CommentsService {
@@ -20,12 +21,23 @@ export class CommentsService {
     private readonly likesRepo: Repository<Like>,
   ) {}
 
-  async likeComment(commentId: number, userId: number) {
+  async likeComment(commentId: number, userId: number): Promise<LikeDto> {
+    // Check if the comment exists in the database
+    const comment = await this.commentsRepo.findOne({ where: { id: commentId } });
+
+    if (!comment) {
+      // If the comment does not exist, throw an exception with a 404 status code
+      throw new NotFoundException(`Comment with id ${commentId} not found`);
+    }
+
+    // Check if the user has already liked the comment
     const existingLike = await this.likesRepo.findOneBy({ commentId, userId });
     if (existingLike) {
+      // If the user has already liked the comment, remove the like
       await this.likesRepo.remove(existingLike);
       return { message: 'Comment unliked' };
     } else {
+      // If the user has not liked the comment, create a new like
       const newLike = this.likesRepo.create({ commentId, userId });
       await this.likesRepo.save(newLike);
       return { message: 'Comment liked' };

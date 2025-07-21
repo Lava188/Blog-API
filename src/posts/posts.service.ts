@@ -11,6 +11,7 @@ import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
 import { Like } from '../likes/likes.entity';
 import { CreatePostDto } from './dto/create-post.dto';
+import { LikeDto } from 'src/likes/dto/like.dto';
 
 @Injectable()
 export class PostsService {
@@ -29,15 +30,25 @@ export class PostsService {
     return this.postRepository.save(post);
   }
 
-  async likePost(postId: number, userId: number) {
+  async likePost(postId: number, userId: number): Promise<LikeDto> {
+    // Check if the post exists in the database
+    const post = await this.postRepository.findOne({ where: { id: postId } });
+    if (!post) {
+      // If the post does not exist, throw an exception with a 404 status code
+      throw new NotFoundException(`Post with id ${postId} not found`);
+    }
+
+    // Check if the user has already liked the post
     const existingLike = await this.likesRepository.findOne({
       where: { postId, userId },
     });
 
     if (existingLike) {
+      // If the user has already liked the post, remove the like
       await this.likesRepository.remove(existingLike);
       return { message: 'Post unliked'}
     } else {
+      // If the user has not liked the post, create a new like
       const newLike = this.likesRepository.create({postId,userId,});
       await this.likesRepository.save(newLike);
       return { message: 'Post liked' };

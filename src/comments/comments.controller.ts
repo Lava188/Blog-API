@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
+import { IRequest } from 'src/common/interface/request.interface';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
@@ -26,7 +27,7 @@ export class CommentsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':commentId/like')
-  async likeComment(@Param('commentId', ParseIntPipe) commentId: number, @Request() req,) {
+  async likeComment(@Param('commentId', ParseIntPipe) commentId: number, @Request() req: IRequest) {
     return this.commentsService.likeComment(commentId, req.user.id);
   }
 

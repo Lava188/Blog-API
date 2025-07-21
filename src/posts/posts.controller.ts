@@ -15,6 +15,7 @@ import { EditPostDto } from './dto/edit-post.dto';
 import { Roles } from '../common/roles.decorator';
 import { Role } from '../users/users.entity';
 import { RolesGuard } from '../common/roles.guard';
+import { IRequest } from 'src/common/interface/request.interface';
 
 @Controller('posts')
 export class PostsController {
@@ -33,8 +34,8 @@ export class PostsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':postId/like')
-  async likePost(@Param('commentId') commentId: number, @Request() req) {
-    return this.postsService.likePost(commentId, req.user.id)
+  async likePost(@Param('postId') postId: number, @Request() req: IRequest) {
+    return this.postsService.likePost(postId, req.user.id)
   }
   
   @UseGuards(AuthGuard('jwt'), RolesGuard)
