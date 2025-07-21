@@ -9,13 +9,28 @@ import { Comment } from './comments.entity';
 import { User } from '../users/users.entity';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
+import { Like } from 'src/likes/likes.entity';
 
 @Injectable()
 export class CommentsService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentsRepo: Repository<Comment>,
+    @InjectRepository(Like)
+    private readonly likesRepo: Repository<Like>,
   ) {}
+
+  async likeComment(commentId: number, userId: number) {
+    const existingLike = await this.likesRepo.findOneBy({ commentId, userId });
+    if (existingLike) {
+      await this.likesRepo.remove(existingLike);
+      return { message: 'Comment unliked' };
+    } else {
+      const newLike = this.likesRepo.create({ commentId, userId });
+      await this.likesRepo.save(newLike);
+      return { message: 'Comment liked' };
+    }
+  }
 
   async findAllByPost(postId: number): Promise<Comment[]> {
     return this.commentsRepo.find({ where: { postId } });

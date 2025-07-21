@@ -31,6 +31,12 @@ export class PostsController {
     }
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':postId/like')
+  async likePost(@Param('commentId') commentId: number, @Request() req) {
+    return this.postsService.likePost(commentId, req.user.id)
+  }
+  
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.USER, Role.ADMIN)
   @Patch(':id')

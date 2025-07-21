@@ -1,3 +1,4 @@
+import { Like } from 'src/likes/likes.entity';
 import { Post } from 'src/posts/posts.entity';
 import { User } from 'src/users/users.entity';
 import {
@@ -8,6 +9,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('comments')
@@ -31,6 +33,9 @@ export class Comment {
   @ManyToOne(() => User, (user) => user.comments, { eager: true })
   @JoinColumn({ name: 'authorId' })
   author: User;
+
+  @OneToMany(() => Like, (like) => like.comment)
+  likes: Like[];
 
   @CreateDateColumn()
   createdAt: Date;

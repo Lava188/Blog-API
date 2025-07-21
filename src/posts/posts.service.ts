@@ -9,6 +9,7 @@ import { Post } from './posts.entity';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
+import { Like } from '../likes/likes.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    @InjectRepository(Like)
+    private readonly likesRepository: Repository<Like>,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: number) {
@@ -24,6 +27,21 @@ export class PostsService {
       authorId: userId,
     });
     return this.postRepository.save(post);
+  }
+
+  async likePost(postId: number, userId: number) {
+    const existingLike = await this.likesRepository.findOne({
+      where: { postId, userId },
+    });
+
+    if (existingLike) {
+      await this.likesRepository.remove(existingLike);
+      return { message: 'Post unliked'}
+    } else {
+      const newLike = this.likesRepository.create({postId,userId,});
+      await this.likesRepository.save(newLike);
+      return { message: 'Post liked' };
+    }
   }
 
   async update(id: number, editPostDto: EditPostDto, user: User) {

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Post } from '../posts/posts.entity';
 import { Comment } from '../comments/comments.entity';
+import { Like } from 'src/likes/likes.entity';
 
 export enum Role {
   USER = 'user',
@@ -28,6 +29,7 @@ export class User {
   @Column({ type: 'enum', enum: Role, default: Role.USER }) role: Role;
   @OneToMany(() => Post, (post) => post.author) posts: Post[];
   @OneToMany(() => Comment, (comment) => comment.author) comments: Comment[];
+  @OneToMany(() => Like, (like) => like.post) likes: Like[];
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
 }
