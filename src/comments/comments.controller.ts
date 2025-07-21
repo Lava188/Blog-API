@@ -25,6 +25,12 @@ export class CommentsController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Post(':commentId/like')
+  async likeComment(@Param('commentId', ParseIntPipe) commentId: number, @Request() req,) {
+    return this.commentsService.likeComment(commentId, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   create(
     @Param('postId', ParseIntPipe) postId: number,

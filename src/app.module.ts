@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { RolesGuard } from './common/roles.guard';
 import { CommentsModule } from './comments/comments.module';
 import { PostsModule } from './posts/posts.module';
+import { LikesModule } from './likes/likes.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PostsModule } from './posts/posts.module';
     AuthModule,
     CommentsModule,
     PostsModule,
+    LikesModule,
   ],
   controllers: [AppController],
   providers: [
