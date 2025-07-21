@@ -14,6 +14,12 @@ export enum Role {
   ADMIN = 'admin',
 }
 
+export enum Status {
+  PENDING  = 'pending',
+  ACTIVE   = 'active',
+  INACTIVE = 'inactive',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn() id: number;
