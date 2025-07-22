@@ -11,7 +11,7 @@ import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
 import { Like } from '../likes/likes.entity';
 import { CreatePostDto } from './dto/create-post.dto';
-import { LikeDto } from 'src/likes/dto/like.dto';
+import { LikeDto } from '../likes/dto/like.dto';
 
 @Injectable()
 export class PostsService {

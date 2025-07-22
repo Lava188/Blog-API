@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
-import { IRequest } from 'src/common/interface/request.interface';
+import { IRequest } from '../common/interface/request.interface';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {

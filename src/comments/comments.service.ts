@@ -9,8 +9,8 @@ import { Comment } from './comments.entity';
 import { User } from '../users/users.entity';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
-import { Like } from 'src/likes/likes.entity';
-import { LikeDto } from 'src/likes/dto/like.dto';
+import { Like } from '../likes/likes.entity';
+import { LikeDto } from '../likes/dto/like.dto';
 
 @Injectable()
 export class CommentsService {
