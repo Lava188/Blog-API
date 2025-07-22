@@ -44,6 +44,20 @@ export class CommentsService {
     }
   }
 
+  async countLikes(commentId: number): Promise<number> {
+    const likeCount = await this.likesRepo.count({
+      where: { id: commentId },
+    });
+    return likeCount;
+  }
+
+  async countDisLikes(commentId: number): Promise<number> {
+    const disLikeCount = await this.likesRepo.count({
+      where: { id: commentId },
+    });
+    return disLikeCount;
+  }
+
   async findAllByPost(postId: number): Promise<Comment[]> {
     return this.commentsRepo.find({ where: { postId } });
   }

@@ -11,6 +11,9 @@ import { RolesGuard } from './common/roles.guard';
 import { CommentsModule } from './comments/comments.module';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
+import { Like } from './likes/likes.entity';
+import { Bookmark } from './bookmark/bookmark.entity';
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { LikesModule } from './likes/likes.module';
       username: 'root',
       password: '',
       database: 'blog_api',
-      entities: [User, Post, Comment],
+      entities: [User, Post, Comment, Like, Bookmark],
       autoLoadEntities: true,
       synchronize: true,
     }),
@@ -30,6 +33,7 @@ import { LikesModule } from './likes/likes.module';
     CommentsModule,
     PostsModule,
     LikesModule,
+    BookmarkModule,
   ],
   controllers: [AppController],
   providers: [

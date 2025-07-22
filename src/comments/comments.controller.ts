@@ -31,6 +31,18 @@ export class CommentsController {
     return this.commentsService.likeComment(commentId, req.user.id);
   }
 
+  @Get(':commentId/likes')
+  async getLikesForComment(@Param('commentId') commentId: number) {
+    const likeCount = await this.commentsService.countLikes(commentId);
+    return { commentId, likeCount };
+  }
+
+  @Get(':commentId/dislikes')
+  async getDisLikesForComment(@Param('commentId') commentId: number) {
+    const disLikeCount = await this.commentsService.countDisLikes(commentId);
+    return { commentId, disLikeCount };
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post()
   create(
