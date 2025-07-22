@@ -28,6 +28,12 @@ export class Post {
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
 
+  @Column({ default: 0 })
+  likeCount: number;
+
+  @Column({ default: 0 })
+  dislikeCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

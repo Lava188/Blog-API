@@ -1,5 +1,5 @@
-import { Post } from 'src/posts/posts.entity';
-import { User } from 'src/users/users.entity';
+import { Post } from '../posts/posts.entity';
+import { User } from '../users/users.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,6 +8,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('comments')
@@ -31,6 +32,19 @@ export class Comment {
   @ManyToOne(() => User, (user) => user.comments, { eager: true })
   @JoinColumn({ name: 'authorId' })
   author: User;
+
+  @ManyToOne(() => Comment, comment => comment.replies, { nullable: true })
+  @JoinColumn({ name: 'parent_comment_id' })
+  parentComment: Comment;
+
+  @OneToMany(() => Comment, comment => comment.parentComment)
+  replies: Comment[];
+
+  @Column({ default: 0 })
+  likeCount: number;
+
+  @Column({ default: 0 })
+  dislikeCount: number;
 
   @CreateDateColumn()
   createdAt: Date;

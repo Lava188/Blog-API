@@ -19,6 +19,15 @@ import { EditCommentDto } from './dto/edit-comments.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
+  @Post(':commentId/reply')
+  async replyComment(
+    @Param('commentId') commentId: number,
+    @Body() createCommentDto: CreateCommentDto,
+    @Request() req,
+  ) {
+    return this.commentsService.replyComment(commentId, createCommentDto, req.user.id);
+  }
+
   @Get()
   findAll(@Param('postId', ParseIntPipe) postId: number) {
     return this.commentsService.findAllByPost(postId);
