@@ -30,11 +30,11 @@ export class Post {
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
 
-  @OneToMany(() => Like, like => like.post)
+  @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
 
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.user) 
-  bookmarks: Bookmark[]
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 
   @CreateDateColumn()
   createdAt: Date;

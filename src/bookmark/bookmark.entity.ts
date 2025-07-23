@@ -4,17 +4,17 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn
 
 @Entity('bookmarks')
 export class Bookmark {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @ManyToOne(() => User, (user) => user.bookmarks)
-    @JoinColumn({ name: 'user_id' })
-    user: User;
+  @ManyToOne(() => User, (user) => user.bookmarks)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-    @ManyToOne(() => Post, (post) => post.bookmarks)
-    @JoinColumn({ name: 'post_id' })
-    post: Post;
+  @ManyToOne(() => Post, (post) => post.bookmarks)
+  @JoinColumn({ name: 'post_id' })
+  post: Post;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    createdAt: Date;
+  @CreateDateColumn({ type: 'timestamp' })
+  createdAt: Date;
 }

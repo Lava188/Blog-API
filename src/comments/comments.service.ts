@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from './comments.entity';
@@ -22,15 +18,11 @@ export class CommentsService {
   ) {}
 
   async likeComment(commentId: number, userId: number): Promise<LikeDto> {
-    // Check if the comment exists in the database
     const comment = await this.commentsRepo.findOne({ where: { id: commentId } });
 
     if (!comment) {
-      // If the comment does not exist, throw an exception with a 404 status code
       throw new NotFoundException(`Comment with id ${commentId} not found`);
     }
-
-    // Check if the user has already liked the comment
     const existingLike = await this.likesRepo.findOneBy({ commentId, userId });
     if (existingLike) {
       // If the user has already liked the comment, remove the like
@@ -64,11 +56,7 @@ export class CommentsService {
     return comment;
   }
 
-  async create(
-    postId: number,
-    dto: CreateCommentDto,
-    user: User,
-  ): Promise<Comment> {
+  async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
     const comment = this.commentsRepo.create({
       content: dto.content,
       postId,

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Patch,
-  Delete,
-  Request,
-  Get,
-} from '@nestjs/common';
+import { Controller, Post, Body, Param, UseGuards, Patch, Delete, Request, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -36,29 +26,25 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Post(':postId/like')
   async likePost(@Param('postId') postId: number, @Request() req: IRequest) {
-    return this.postsService.likePost(postId, req.user.id)
+    return this.postsService.likePost(postId, req.user.id);
   }
 
   @Get(':postId/likes')
-  async getLikesForPost(@Param('postId') postId: number) {
+  async getLikesForPost(@Param('postId') postId: number): Promise<{ postId: number; likeCount: number }> {
     const likeCount = await this.postsService.countLikes(postId);
     return { postId, likeCount };
   }
 
   @Get(':postId/dislikes')
-  async getDisLikesForPost(@Param('postId') postId: number) {
+  async getDisLikesForPost(@Param('postId') postId: number): Promise<{ postId: number; disLikeCount: number }> {
     const disLikeCount = await this.postsService.countDisLikes(postId);
     return { postId, disLikeCount };
   }
-  
+
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.USER, Role.ADMIN)
   @Patch(':id')
-  updatePost(
-    @Param('id') id: number,
-    @Body() editPostDto: EditPostDto,
-    @Request() req,
-  ) {
+  updatePost(@Param('id') id: number, @Body() editPostDto: EditPostDto, @Request() req) {
     return this.postsService.update(id, editPostDto, req.user);
   }
 

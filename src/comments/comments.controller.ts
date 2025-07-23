@@ -1,15 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-  Request,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comments.dto';
@@ -32,34 +21,28 @@ export class CommentsController {
   }
 
   @Get(':commentId/likes')
-  async getLikesForComment(@Param('commentId') commentId: number) {
+  async getLikesForComment(@Param('commentId') commentId: number): Promise<{ commentId: number; likeCount: number }> {
     const likeCount = await this.commentsService.countLikes(commentId);
     return { commentId, likeCount };
   }
 
   @Get(':commentId/dislikes')
-  async getDisLikesForComment(@Param('commentId') commentId: number) {
+  async getDisLikesForComment(
+    @Param('commentId') commentId: number,
+  ): Promise<{ commentId: number; disLikeCount: number }> {
     const disLikeCount = await this.commentsService.countDisLikes(commentId);
     return { commentId, disLikeCount };
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  create(
-    @Param('postId', ParseIntPipe) postId: number,
-    @Body() dto: CreateCommentDto,
-    @Request() req,
-  ) {
+  create(@Param('postId', ParseIntPipe) postId: number, @Body() dto: CreateCommentDto, @Request() req) {
     return this.commentsService.create(postId, dto, req.user);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: EditCommentDto,
-    @Request() req,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: EditCommentDto, @Request() req) {
     return this.commentsService.update(id, dto, req.user);
   }
 

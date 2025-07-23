@@ -7,8 +7,8 @@ import { Post } from '../posts/posts.entity';
 import { User } from '../users/users.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Bookmark, Post, User])],
-    providers: [BookmarkService],
-    controllers: [BookmarkController],
+  imports: [TypeOrmModule.forFeature([Bookmark, Post, User])],
+  providers: [BookmarkService],
+  controllers: [BookmarkController],
 })
 export class BookmarkModule {}
