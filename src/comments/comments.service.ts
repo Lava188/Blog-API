@@ -23,25 +23,25 @@ export class CommentsService {
     if (!comment) {
       throw new NotFoundException(`Comment with id ${commentId} not found`);
     }
-    const existingLike = await this.likesRepo.findOneBy({ commentId, userId });
+    const existingLike = await this.likesRepo.findOneBy({ comment: { id: commentId }, user: { id: userId } });
     if (existingLike) {
       // If the user has already liked the comment, remove the like
       await this.likesRepo.remove(existingLike);
       return { message: 'Comment unliked' };
     } else {
       // If the user has not liked the comment, create a new like
-      const newLike = this.likesRepo.create({ commentId, userId });
+      const newLike = this.likesRepo.create({ comment: { id: commentId }, user: { id: userId } });
       await this.likesRepo.save(newLike);
       return { message: 'Comment liked' };
     }
   }
 
   async countLikes(commentId: number): Promise<number> {
-    return this.likesRepo.count({ where: { commentId, isLike: true } });
+    return this.likesRepo.count({ where: { comment: { id: commentId }, isLike: true } });
   }
 
   async countDisLikes(commentId: number): Promise<number> {
-    return this.likesRepo.count({ where: { commentId, isLike: false } });
+    return this.likesRepo.count({ where: { comment: { id: commentId }, isLike: false } });
   }
 
   async findAllByPost(postId: number): Promise<Comment[]> {

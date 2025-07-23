@@ -4,6 +4,7 @@ import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
 import { IRequest } from '../common/interface/request.interface';
+import { User } from '../users/users.entity';
 
 @Controller('posts/:postId/comments')
 export class CommentsController {
@@ -37,18 +38,18 @@ export class CommentsController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   create(@Param('postId', ParseIntPipe) postId: number, @Body() dto: CreateCommentDto, @Request() req) {
-    return this.commentsService.create(postId, dto, req.user);
+    return this.commentsService.create(postId, dto, req.user as User);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: EditCommentDto, @Request() req) {
-    return this.commentsService.update(id, dto, req.user);
+    return this.commentsService.update(id, dto, req.user as User);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.commentsService.remove(id, req.user);
+    return this.commentsService.remove(id, req.user as User);
   }
 }

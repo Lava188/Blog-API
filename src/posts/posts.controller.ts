@@ -7,6 +7,7 @@ import { Roles } from '../common/roles.decorator';
 import { Role } from '../users/users.entity';
 import { RolesGuard } from '../common/roles.guard';
 import { IRequest } from '../common/interface/request.interface';
+import { User } from '../users/users.entity';
 
 @Controller('posts')
 export class PostsController {
@@ -14,9 +15,9 @@ export class PostsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async createPost(@Body() createPostDto: CreatePostDto, @Request() req) {
+  async createPost(@Body() createPostDto: CreatePostDto, @Request() req: IRequest) {
     try {
-      return await this.postsService.create(createPostDto, req.user.id);
+      return await this.postsService.create(createPostDto, Number(req.user.id));
     } catch (err) {
       console.error('[POST /posts] createPost error:', err);
       throw err;
@@ -44,14 +45,14 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.USER, Role.ADMIN)
   @Patch(':id')
-  updatePost(@Param('id') id: number, @Body() editPostDto: EditPostDto, @Request() req) {
-    return this.postsService.update(id, editPostDto, req.user);
+  updatePost(@Param('id') id: number, @Body() editPostDto: EditPostDto, @Request() req: IRequest) {
+    return this.postsService.update(id, editPostDto, req.user as User);
   }
 
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
-  deletePost(@Param('id') id: number, @Request() req) {
-    return this.postsService.remove(id, req.user);
+  deletePost(@Param('id') id: number, @Request() req: IRequest) {
+    return this.postsService.remove(id, req.user as User);
   }
 }

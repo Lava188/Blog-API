@@ -8,15 +8,6 @@ export class Like {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  postId: number;
-
-  @Column()
-  commentId: number;
-
-  @Column()
-  userId: number;
-
   @Column({ default: true })
   isLike: boolean;
 

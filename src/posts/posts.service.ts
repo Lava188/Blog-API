@@ -34,7 +34,7 @@ export class PostsService {
     }
 
     const existingLike = await this.likesRepository.findOne({
-      where: { postId, userId },
+      where: { post: { id: postId }, user: { id: userId } },
     });
 
     if (existingLike) {
@@ -43,18 +43,18 @@ export class PostsService {
       return { message: 'Post unliked' };
     } else {
       // If the user has not liked the post, create a new like
-      const newLike = this.likesRepository.create({ postId, userId });
+      const newLike = this.likesRepository.create({ post: { id: postId }, user: { id: userId } });
       await this.likesRepository.save(newLike);
       return { message: 'Post liked' };
     }
   }
 
   async countLikes(postId: number): Promise<number> {
-    return this.likesRepository.count({ where: { postId, isLike: true } });
+    return this.likesRepository.count({ where: { post: { id: postId }, isLike: true } });
   }
 
   async countDisLikes(postId: number): Promise<number> {
-    return this.likesRepository.count({ where: { postId, isLike: false } });
+    return this.likesRepository.count({ where: { post: { id: postId }, isLike: false } });
   }
 
   async update(id: number, editPostDto: EditPostDto, user: User) {
