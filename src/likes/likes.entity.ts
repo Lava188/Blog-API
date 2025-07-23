@@ -17,6 +17,9 @@ export class Like {
     @Column()
     userId: number;
 
+    @Column({ default: true })
+    isLike: boolean;
+
     @ManyToOne(() => Post, post => post.likes, { nullable: true })
     @JoinColumn({ name: 'post_id' })
     post: Post;

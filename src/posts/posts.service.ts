@@ -56,13 +56,11 @@ export class PostsService {
   }
 
   async countLikes(postId: number): Promise<number> {
-    const likeCount = await this.likesRepository.count({where: { id: postId },});
-    return likeCount;
+    return this.likesRepository.count({ where: { postId, isLike: true } });
   }
 
   async countDisLikes(postId: number): Promise<number> {
-    const disLikeCount = await this.likesRepository.count({where: { id: postId },});
-    return disLikeCount;
+    return this.likesRepository.count({ where: { postId, isLike: false } });
   }
 
   async update(id: number, editPostDto: EditPostDto, user: User) {
