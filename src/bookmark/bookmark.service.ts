@@ -16,7 +16,7 @@ export class BookmarkService {
     private readonly postRepository: Repository<Post>,
   ) {}
 
-  async addBookmark(userId: number, postId: number): Promise<{ message: string }> {
+  async add(userId: number, postId: number): Promise<{ message: string }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     const post = await this.postRepository.findOne({ where: { id: postId } });
 
@@ -38,7 +38,7 @@ export class BookmarkService {
     return { message: 'Post bookmarked successfully' };
   }
 
-  async removeBookmark(userId: number, postId: number): Promise<{ message: string }> {
+  async remove(userId: number, postId: number): Promise<{ message: string }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     const post = await this.postRepository.findOne({ where: { id: postId } });
 
