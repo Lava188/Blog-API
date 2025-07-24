@@ -33,6 +33,12 @@ export class Post {
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
 
+  @Column({ default: 0 })
+  likeCount: number;
+
+  @Column({ default: 0 })
+  dislikeCount: number;
+
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   bookmarks: Bookmark[];
 

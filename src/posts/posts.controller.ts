@@ -8,6 +8,7 @@ import { Role } from '../users/users.entity';
 import { RolesGuard } from '../common/roles.guard';
 import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
+import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -31,13 +32,13 @@ export class PostsController {
   }
 
   @Get(':postId/likes')
-  async getLikesForPost(@Param('postId') postId: number): Promise<{ postId: number; likeCount: number }> {
+  async getLikesForPost(@Param('postId') postId: number): Promise<GetLikePostDto> {
     const likeCount = await this.postsService.countLikes(postId);
     return { postId, likeCount };
   }
 
   @Get(':postId/dislikes')
-  async getDisLikesForPost(@Param('postId') postId: number): Promise<{ postId: number; disLikeCount: number }> {
+  async getDisLikesForPost(@Param('postId') postId: number): Promise<GetDisLikePostDto> {
     const disLikeCount = await this.postsService.countDisLikes(postId);
     return { postId, disLikeCount };
   }
