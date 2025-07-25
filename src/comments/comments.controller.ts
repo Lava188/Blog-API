@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comments.dto';
@@ -7,7 +19,9 @@ import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetDisLikeCommentDto, GetLikeCommentDto } from './dto/get-like-comment.dto';
+import { Throttle } from '@nestjs/throttler';
 
+@Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('posts/:postId/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
@@ -19,10 +33,20 @@ export class CommentsController {
     return this.commentsService.findAllByPost(postId);
   }
 
+  @Get('post/:postId')
+  async getCommentsByPost(
+    @Param('postId') postId: number,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return this.commentsService.getPaginatedCommentsByPost(Number(postId), page, limit);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Like a comment' })
   @ApiResponse({ status: 200, description: 'Like a comment successfully' })
+  @Throttle({ default: { limit: 3, ttl: 10000 } })
   @Post(':commentId/like')
   async likeComment(@Param('commentId', ParseIntPipe) commentId: number, @Request() req: IRequest) {
     return this.commentsService.likeComment(commentId, req.user.id);
@@ -52,6 +76,7 @@ export class CommentsController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a comment' })
   @ApiResponse({ status: 201, description: 'Create a comment successfully' })
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post()
   create(@Param('postId', ParseIntPipe) postId: number, @Body() dto: CreateCommentDto, @Request() req: IRequest) {
     return this.commentsService.create(postId, dto, req.user as User);

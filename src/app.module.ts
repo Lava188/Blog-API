@@ -16,6 +16,7 @@ import { BookmarkModule } from './bookmark/bookmark.module';
 import { Like } from './likes/likes.entity';
 import { Bookmark } from './bookmark/bookmark.entity';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -46,6 +47,23 @@ import { CacheModule } from '@nestjs/cache-manager';
       ttl: 5,
       max: 100,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 60000,
+        limit: 100,
+      },
+      {
+        name: 'medium',
+        ttl: 60000 * 5,
+        limit: 500,
+      },
+      {
+        name: 'long',
+        ttl: 60000 * 15,
+        limit: 1500,
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [
@@ -53,6 +71,10 @@ import { CacheModule } from '@nestjs/cache-manager';
     {
       provide: 'APP_GUARD',
       useClass: RolesGuard,
+    },
+    {
+      provide: 'APP_GUARD',
+      useClass: ThrottlerGuard,
     },
   ],
 })

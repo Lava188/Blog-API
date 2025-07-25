@@ -8,6 +8,9 @@ import { User } from '../users/users.entity';
 import { Like } from '../likes/likes.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { LikeDto } from '../likes/dto/like.dto';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PostsService {
@@ -16,6 +19,7 @@ export class PostsService {
     private readonly postRepository: Repository<Post>,
     @InjectRepository(Like)
     private readonly likesRepository: Repository<Like>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: number) {
@@ -23,6 +27,7 @@ export class PostsService {
       ...createPostDto,
       authorId: userId,
     });
+    await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);
   }
 
@@ -65,6 +70,8 @@ export class PostsService {
     }
 
     Object.assign(post, editPostDto);
+    await this.cacheManager.del('all_posts');
+    await this.cacheManager.del(`post_${id}`);
     return this.postRepository.save(post);
   }
 
@@ -76,7 +83,47 @@ export class PostsService {
     }
 
     await this.postRepository.delete(id);
+    await this.cacheManager.del('all_posts');
+    await this.cacheManager.del(`post_${id}`);
     return { message: 'Post deleted successfully' };
+  }
+
+  async getAllPosts() {
+    const cacheKey = 'all_posts';
+    let posts = await this.cacheManager.get(cacheKey);
+
+    if (!posts) {
+      posts = await this.postRepository.find();
+      await this.cacheManager.set(cacheKey, posts, 60);
+    }
+
+    return posts;
+  }
+
+  async getPostById(id: number) {
+    const cacheKey = `post_${id}`;
+    let post = await this.cacheManager.get(cacheKey);
+
+    if (!post) {
+      post = await this.postRepository.findOne({ where: { id } });
+      if (!post) throw new NotFoundException('Post not found');
+      await this.cacheManager.set(cacheKey, post, 60);
+    }
+    return post;
+  }
+
+  async getPaginatedPosts(page: number, limit: number) {
+    const [posts, total] = await this.postRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' },
+    });
+    return {
+      data: posts,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
   }
 
   private async findOne(id: number) {

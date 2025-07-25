@@ -3,8 +3,6 @@ import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,8 +22,6 @@ async function bootstrap() {
       },
     }),
   );
-
-  app.useGlobalInterceptors(new CacheInterceptor(app.getHttpAdapter()));
 
   // Setup Swagger
   const config = new DocumentBuilder()
@@ -49,4 +45,6 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT || 3000);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error(err);
+});

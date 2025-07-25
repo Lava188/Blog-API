@@ -7,6 +7,9 @@ import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
 import { Like } from '../likes/likes.entity';
 import { LikeDto } from '../likes/dto/like.dto';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CommentsService {
@@ -15,6 +18,7 @@ export class CommentsService {
     private readonly commentsRepo: Repository<Comment>,
     @InjectRepository(Like)
     private readonly likesRepo: Repository<Like>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async likeComment(commentId: number, userId: number): Promise<LikeDto> {
@@ -45,13 +49,22 @@ export class CommentsService {
   }
 
   async findAllByPost(postId: number): Promise<Comment[]> {
-    return this.commentsRepo.find({ where: { postId } });
+    const cacheKey = `comments_post_${postId}`;
+    let comments = await this.cacheManager.get<Comment[]>(cacheKey);
+    if (!comments) {
+      comments = await this.commentsRepo.find({ where: { postId } });
+      await this.cacheManager.set(cacheKey, comments, 60);
+    }
+    return comments;
   }
 
   async findOne(id: number): Promise<Comment> {
-    const comment = await this.commentsRepo.findOneBy({ id });
+    const cacheKey = `comment_${id}`;
+    let comment = await this.cacheManager.get<Comment>(cacheKey);
     if (!comment) {
-      throw new NotFoundException(`Comment #${id} not found`);
+      comment = (await this.commentsRepo.findOneBy({ id })) ?? undefined;
+      if (!comment) throw new NotFoundException(`Comment #${id} not found`);
+      await this.cacheManager.set(cacheKey, comment, 60);
     }
     return comment;
   }
@@ -62,6 +75,7 @@ export class CommentsService {
       postId,
       authorId: user.id,
     });
+    await this.cacheManager.del(`comments_post_${postId}`);
     return this.commentsRepo.save(comment);
   }
 
@@ -72,6 +86,7 @@ export class CommentsService {
       throw new ForbiddenException(`You can only edit your own comments.`);
     }
     comment.content = dto.content;
+    await this.cacheManager.del(`comment_${id}`);
     return this.commentsRepo.save(comment);
   }
 
@@ -83,5 +98,21 @@ export class CommentsService {
     }
 
     await this.commentsRepo.delete(id);
+    await this.cacheManager.del(`comment_${id}`);
+  }
+
+  async getPaginatedCommentsByPost(postId: number, page: number, limit: number) {
+    const [comments, total] = await this.commentsRepo.findAndCount({
+      where: { postId },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' },
+    });
+    return {
+      data: comments,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
   }
 }

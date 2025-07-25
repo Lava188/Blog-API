@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, UseGuards, Patch, Delete, Request, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, UseGuards, Patch, Delete, Request, Get, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -10,7 +10,9 @@ import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
+import { Throttle } from '@nestjs/throttler';
 
+@Throttle({ default: { limit: 5, ttl: 60000 } })
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
@@ -19,6 +21,7 @@ export class PostsController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Create a post' })
   @ApiResponse({ status: 201, description: 'Create a post successfully' })
+  @Throttle({ default: { limit: 2, ttl: 10000 } })
   @Post()
   async createPost(@Body() createPostDto: CreatePostDto, @Request() req: IRequest) {
     try {
@@ -33,6 +36,7 @@ export class PostsController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Like a post' })
   @ApiResponse({ status: 200, description: 'Like a post successfully' })
+  @Throttle({ default: { limit: 3, ttl: 10000 } })
   @Post(':postId/like')
   async likePost(@Param('postId') postId: number, @Request() req: IRequest) {
     return this.postsService.likePost(postId, req.user.id);
@@ -76,5 +80,14 @@ export class PostsController {
   @Delete(':id')
   deletePost(@Param('id') id: number, @Request() req: IRequest) {
     return this.postsService.remove(id, req.user as User);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get all posts with pagination' })
+  @ApiResponse({ status: 200, description: 'Get all posts with pagination successfully' })
+  @Get()
+  async getPosts(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
+    return this.postsService.getPaginatedPosts(page, limit);
   }
 }

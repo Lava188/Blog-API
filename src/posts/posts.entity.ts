@@ -19,6 +19,8 @@ export class Post {
 
   @Column() title: string;
   @Column('text') content: string;
+  @Column({ nullable: true })
+  image?: string;
 
   @Column()
   authorId: number;
