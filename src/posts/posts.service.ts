@@ -6,6 +6,9 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { Express } from 'express';
 
 @Injectable()
 export class PostsService {
@@ -14,10 +17,22 @@ export class PostsService {
         private readonly postRepository: Repository<Post>,
     ) {}
 
-    async create(createPostDto: CreatePostDto, userId: number) {
+    async create(createPostDto: CreatePostDto, userId: number, image?: Express.Multer.File) {
+        let imagePath: string | undefined = undefined;
+        if (image) {
+            const uploadDir = path.join(process.cwd(), 'uploads');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir);
+            }
+            const fileName = `${Date.now()}_${image.originalname}`;
+            const filePath = path.join(uploadDir, fileName);
+            fs.writeFileSync(filePath, image.buffer);
+            imagePath = `uploads/${fileName}`;
+        }
         const post = this.postRepository.create({
-        ...createPostDto,
-        authorId: userId,  // Gán authorId là userId từ JWT
+            ...createPostDto,
+            authorId: userId,
+            image: imagePath,
         });
         return this.postRepository.save(post);
     }

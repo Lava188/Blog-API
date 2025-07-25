@@ -8,6 +8,7 @@ import { Post } from './posts/posts.entity';
 import { Comment } from './comments/comments.entity';
 import { AuthModule } from './auth/auth.module';
 import { RolesGuard } from './common/roles.guard';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -21,8 +22,9 @@ import { RolesGuard } from './common/roles.guard';
       entities: [User, Post, Comment],
       synchronize: true,
     }),
-    UsersModule, 
-    AuthModule  
+    UsersModule,
+    PostsModule, 
+    AuthModule
   ],
   controllers: [AppController],
   providers: [
