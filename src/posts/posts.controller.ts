@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Request, UseInterceptors, UploadedFile, ParseFilePipe, FileTypeValidator } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -18,7 +18,13 @@ export class PostsController {
     @Post()
     createPost(
         @Body() createPostDto: CreatePostDto,
-        @UploadedFile() image: Express.Multer.File,
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|bmp|webp)$/ })
+                ],
+            })
+        ) image: Express.Multer.File,
         @Request() req,
     ) {
         return this.postsService.create(createPostDto, req.user.id, image);
