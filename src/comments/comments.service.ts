@@ -59,13 +59,8 @@ export class CommentsService {
   }
 
   async findOne(id: number): Promise<Comment> {
-    const cacheKey = `comment_${id}`;
-    let comment = await this.cacheManager.get<Comment>(cacheKey);
-    if (!comment) {
-      comment = (await this.commentsRepo.findOneBy({ id })) ?? undefined;
-      if (!comment) throw new NotFoundException(`Comment #${id} not found`);
-      await this.cacheManager.set(cacheKey, comment, 60);
-    }
+    const comment = (await this.commentsRepo.findOneBy({ id })) ?? undefined;
+    if (!comment) throw new NotFoundException(`Comment #${id} not found`);
     return comment;
   }
 
@@ -86,7 +81,7 @@ export class CommentsService {
       throw new ForbiddenException(`You can only edit your own comments.`);
     }
     comment.content = dto.content;
-    await this.cacheManager.del(`comment_${id}`);
+    await this.cacheManager.del(`comments_post_${comment.postId}`);
     return this.commentsRepo.save(comment);
   }
 
@@ -98,7 +93,7 @@ export class CommentsService {
     }
 
     await this.commentsRepo.delete(id);
-    await this.cacheManager.del(`comment_${id}`);
+    await this.cacheManager.del(`comments_post_${comment.postId}`);
   }
 
   async getPaginatedCommentsByPost(postId: number, page: number, limit: number) {

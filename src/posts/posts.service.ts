@@ -71,7 +71,6 @@ export class PostsService {
 
     Object.assign(post, editPostDto);
     await this.cacheManager.del('all_posts');
-    await this.cacheManager.del(`post_${id}`);
     return this.postRepository.save(post);
   }
 
@@ -84,7 +83,6 @@ export class PostsService {
 
     await this.postRepository.delete(id);
     await this.cacheManager.del('all_posts');
-    await this.cacheManager.del(`post_${id}`);
     return { message: 'Post deleted successfully' };
   }
 
@@ -101,14 +99,8 @@ export class PostsService {
   }
 
   async getPostById(id: number) {
-    const cacheKey = `post_${id}`;
-    let post = await this.cacheManager.get(cacheKey);
-
-    if (!post) {
-      post = await this.postRepository.findOne({ where: { id } });
-      if (!post) throw new NotFoundException('Post not found');
-      await this.cacheManager.set(cacheKey, post, 60);
-    }
+    const post = await this.postRepository.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
     return post;
   }
 

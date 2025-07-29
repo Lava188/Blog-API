@@ -6,7 +6,7 @@ import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
 import { GetDisLikeCommentDto, GetLikeCommentDto } from './dto/get-like-comment.dto';
 import { Throttle } from '@nestjs/throttler';
-import { Auth } from '../common/auth.decorator';
+import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('posts/:postId/comments')
@@ -14,13 +14,17 @@ export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Get()
-  @Auth({ summary: 'Get all comments', responseStatus: 200, responseDesc: 'Get all comments successfully' })
+  @AuthPublic({
+    summary: 'Get all comments',
+    responseStatus: 200,
+    responseDesc: 'Get all comments successfully',
+  })
   findAll(@Param('postId', ParseIntPipe) postId: number) {
     return this.commentsService.findAllByPost(postId);
   }
 
   @Get('post/:postId')
-  @Auth({
+  @AuthPublic({
     summary: 'Get paginated comments by post',
     responseStatus: 200,
     responseDesc: 'Get paginated comments by post successfully',
@@ -33,14 +37,18 @@ export class CommentsController {
     return this.commentsService.getPaginatedCommentsByPost(Number(postId), page, limit);
   }
 
-  @Auth({ summary: 'Like a comment', responseStatus: 200, responseDesc: 'Like a comment successfully' })
+  @AuthPrivate({
+    summary: 'Like a comment',
+    responseStatus: 200,
+    responseDesc: 'Like a comment successfully',
+  })
   @Throttle({ default: { limit: 3, ttl: 10000 } })
   @Post(':commentId/like')
   async likeComment(@Param('commentId', ParseIntPipe) commentId: number, @Request() req: IRequest) {
     return this.commentsService.likeComment(commentId, req.user.id);
   }
 
-  @Auth({
+  @AuthPublic({
     summary: 'Get likes for a comment',
     responseStatus: 200,
     responseDesc: 'Get likes for a comment successfully',
@@ -51,7 +59,7 @@ export class CommentsController {
     return { commentId, likeCount };
   }
 
-  @Auth({
+  @AuthPublic({
     summary: 'Get dislikes for a comment',
     responseStatus: 200,
     responseDesc: 'Get dislikes for a comment successfully',
@@ -62,22 +70,34 @@ export class CommentsController {
     return { commentId, disLikeCount };
   }
 
-  @Auth({ summary: 'Create a comment', responseStatus: 201, responseDesc: 'Create a comment successfully' })
+  @AuthPrivate({
+    summary: 'Create a comment',
+    responseStatus: 201,
+    responseDesc: 'Create a comment successfully',
+  })
   @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post()
   create(@Param('postId', ParseIntPipe) postId: number, @Body() dto: CreateCommentDto, @Request() req: IRequest) {
     return this.commentsService.create(postId, dto, req.user as User);
   }
 
-  @Auth({ summary: 'Update a comment', responseStatus: 200, responseDesc: 'Update a comment successfully' })
+  @AuthPrivate({
+    summary: 'Update a comment',
+    responseStatus: 200,
+    responseDesc: 'Update a comment successfully',
+  })
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: EditCommentDto, @Request() req: IRequest) {
     return this.commentsService.update(id, dto, req.user as User);
   }
 
-  @Auth({ summary: 'Delete a comment', responseStatus: 200, responseDesc: 'Delete a comment successfully' })
+  @AuthPrivate({
+    summary: 'Delete a comment',
+    responseStatus: 200,
+    responseDesc: 'Delete a comment successfully',
+  })
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: IRequest) {
     return this.commentsService.remove(id, req.user as User);
   }
 }

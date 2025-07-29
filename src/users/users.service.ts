@@ -22,7 +22,6 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     user.password = hashedPassword;
     await this.cacheManager.del('all_users');
-    await this.cacheManager.del(`user_${user.id}`);
     return this.repo.save(user);
   }
 
@@ -37,15 +36,10 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const cacheKey = `user_${id}`;
-    let user = await this.cacheManager.get<User>(cacheKey);
-    if (!user) {
-      const userId = Number(id);
-      if (isNaN(userId)) throw new BadRequestException(`Invalid id ${id}`);
-      user = (await this.repo.findOneBy({ id: userId })) ?? undefined;
-      if (!user) throw new NotFoundException(`User with id ${id} not found`);
-      await this.cacheManager.set(cacheKey, user, 60);
-    }
+    const userId = Number(id);
+    if (isNaN(userId)) throw new BadRequestException(`Invalid id ${id}`);
+    const user = (await this.repo.findOneBy({ id: userId })) ?? undefined;
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
     return user;
   }
 
@@ -56,13 +50,13 @@ export class UsersService {
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
     await this.repo.update(id, dto);
-    await this.cacheManager.del(`user_${id}`);
+    await this.cacheManager.del('all_users');
     return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
     await this.repo.delete(id);
-    await this.cacheManager.del(`user_${id}`);
+    await this.cacheManager.del('all_users');
   }
 
   async getPaginatedUsers(page: number, limit: number) {

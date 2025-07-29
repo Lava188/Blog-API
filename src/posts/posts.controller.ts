@@ -7,14 +7,18 @@ import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
 import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
 import { Throttle } from '@nestjs/throttler';
-import { Auth } from '../common/auth.decorator';
+import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
 
 @Throttle({ default: { limit: 5, ttl: 60000 } })
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
-  @Auth({ summary: 'Create a post', responseStatus: 201, responseDesc: 'Create a post successfully' })
+  @AuthPrivate({
+    summary: 'Create a post',
+    responseStatus: 201,
+    responseDesc: 'Create a post successfully',
+  })
   @Post()
   async createPost(@Body() createPostDto: CreatePostDto, @Request() req: IRequest) {
     try {
@@ -25,21 +29,29 @@ export class PostsController {
     }
   }
 
-  @Auth({ summary: 'Like a post', responseStatus: 200, responseDesc: 'Like a post successfully' })
+  @AuthPrivate({
+    summary: 'Like a post',
+    responseStatus: 200,
+    responseDesc: 'Like a post successfully',
+  })
   @Throttle({ default: { limit: 3, ttl: 10000 } })
   @Post(':postId/like')
   async likePost(@Param('postId') postId: number, @Request() req: IRequest) {
     return this.postsService.likePost(postId, req.user.id);
   }
 
-  @Auth({ summary: 'Get likes for a post', responseStatus: 200, responseDesc: 'Get likes for a post successfully' })
+  @AuthPublic({
+    summary: 'Get likes for a post',
+    responseStatus: 200,
+    responseDesc: 'Get likes for a post successfully',
+  })
   @Get(':postId/likes')
   async getLikesForPost(@Param('postId') postId: number): Promise<GetLikePostDto> {
     const likeCount = await this.postsService.countLikes(postId);
     return { postId, likeCount };
   }
 
-  @Auth({
+  @AuthPublic({
     summary: 'Get dislikes for a post',
     responseStatus: 200,
     responseDesc: 'Get dislikes for a post successfully',
@@ -50,7 +62,7 @@ export class PostsController {
     return { postId, disLikeCount };
   }
 
-  @Auth({
+  @AuthPrivate({
     summary: 'Update a post',
     responseStatus: 200,
     responseDesc: 'Update a post successfully',
@@ -61,7 +73,7 @@ export class PostsController {
     return this.postsService.update(id, editPostDto, req.user as User);
   }
 
-  @Auth({
+  @AuthPrivate({
     summary: 'Delete a post',
     responseStatus: 200,
     responseDesc: 'Delete a post successfully',
@@ -72,7 +84,7 @@ export class PostsController {
     return this.postsService.remove(id, req.user as User);
   }
 
-  @Auth({
+  @AuthPublic({
     summary: 'Get all posts with pagination',
     responseStatus: 200,
     responseDesc: 'Get all posts with pagination successfully',
