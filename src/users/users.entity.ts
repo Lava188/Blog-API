@@ -19,6 +19,9 @@ export enum Status {
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn() id: number;
+  @Column() name: string;
+  @Column({ nullable: true }) avatar?: string;
+  @Column({ nullable: true }) bio?: string;
   @Column({ unique: true }) email: string;
   @Column() password?: string;
   @Column({ type: 'enum', enum: Role, default: Role.USER }) role: Role;

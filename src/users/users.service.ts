@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -71,6 +72,15 @@ export class UsersService {
       page,
       lastPage: Math.ceil(total / limit),
     };
+  }
+
+  async updateProfile(id: string, dto: UpdateProfileDto) {
+    const user = await this.repo.findOneBy({ id: Number(id) });
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    Object.assign(user, dto);
+    await this.repo.save(user);
+    delete user.password;
+    return user;
   }
 
   async saveRefreshToken(userId: number, refreshToken: string) {

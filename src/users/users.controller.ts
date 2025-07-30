@@ -10,6 +10,7 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,6 +18,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate } from '../common/auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { IRequest } from '../common/interface/request.interface';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
@@ -74,6 +77,16 @@ export class UsersController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.svc.update(id, dto);
+  }
+
+  @Patch('profile')
+  @AuthPrivate({
+    summary: 'Update user profile',
+    responseStatus: 200,
+    responseDesc: 'Update user profile successfully',
+  })
+  async updateProfile(@Body() dto: UpdateProfileDto, @Request() req: IRequest) {
+    return this.svc.updateProfile(req.user.id.toString(), dto);
   }
 
   @Delete(':id')
