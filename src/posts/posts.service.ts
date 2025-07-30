@@ -2,71 +2,144 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './posts.entity';
-import { CreatePostDto } from './dto/create-post.dto';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Express } from 'express';
+import { Like } from '../likes/likes.entity';
+import { CreatePostDto } from './dto/create-post.dto';
+import { LikeDto } from '../likes/dto/like.dto';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PostsService {
-    constructor(
-        @InjectRepository(Post)
-        private readonly postRepository: Repository<Post>,
-    ) {}
+  constructor(
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
+    @InjectRepository(Like)
+    private readonly likesRepository: Repository<Like>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
-    async create(createPostDto: CreatePostDto, userId: number, image?: Express.Multer.File) {
-        let imagePath: string | undefined = undefined;
-        if (image) {
-            const uploadDir = path.join(process.cwd(), 'uploads');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir);
-            }
-            const fileName = `${Date.now()}_${image.originalname}`;
-            const filePath = path.join(uploadDir, fileName);
-            fs.writeFileSync(filePath, image.buffer);
-            imagePath = `uploads/${fileName}`;
-        }
-        const post = this.postRepository.create({
-            ...createPostDto,
-            authorId: userId,
-            image: imagePath,
-        });
-        return this.postRepository.save(post);
+  async create(createPostDto: CreatePostDto, userId: number, image?: Express.Multer.File) {
+    let imagePath: string | undefined = undefined;
+    if (image) {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+      }
+      const fileName = `${Date.now()}_${image.originalname}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, image.buffer);
+      imagePath = `uploads/${fileName}`;
+    }
+    const post = this.postRepository.create({
+      ...createPostDto,
+      authorId: userId,
+      image: imagePath,
+    });
+    await this.cacheManager.del('all_posts');
+    return this.postRepository.save(post);
+  }
+
+  async likePost(postId: number, userId: number): Promise<LikeDto> {
+    // Check if the post exists in the database
+    const post = await this.postRepository.findOne({ where: { id: postId } });
+    if (!post) {
+      throw new NotFoundException(`Post with id ${postId} not found`);
     }
 
-    async update(id: number, editPostDto: EditPostDto, user: User) {
-        const post = await this.findOne(id);
+    const existingLike = await this.likesRepository.findOne({
+      where: { post: { id: postId }, user: { id: userId } },
+    });
 
-        // Kiểm tra quyền sở hữu bài viết
-        if (post.authorId !== user.id && user.role !== Role.ADMIN) {
-        throw new ForbiddenException('You do not have permission to edit this post');
-        }
+    if (existingLike) {
+      // If the user has already liked the post, remove the like
+      await this.likesRepository.remove(existingLike);
+      return { message: 'Post unliked' };
+    } else {
+      // If the user has not liked the post, create a new like
+      const newLike = this.likesRepository.create({ post: { id: postId }, user: { id: userId } });
+      await this.likesRepository.save(newLike);
+      return { message: 'Post liked' };
+    }
+  }
 
-        Object.assign(post, editPostDto);
-        return this.postRepository.save(post);
+  async countLikes(postId: number): Promise<number> {
+    return this.likesRepository.count({ where: { post: { id: postId }, isLike: true } });
+  }
+
+  async countDisLikes(postId: number): Promise<number> {
+    return this.likesRepository.count({ where: { post: { id: postId }, isLike: false } });
+  }
+
+  async update(id: number, editPostDto: EditPostDto, user: User) {
+    const post = await this.findOne(id);
+
+    if (post.authorId !== user.id && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('You do not have permission to edit this post');
     }
 
-    async remove(id: number, user: User) {
-        const post = await this.findOne(id);
+    Object.assign(post, editPostDto);
+    await this.cacheManager.del('all_posts');
+    return this.postRepository.save(post);
+  }
 
-        if (post.authorId !== user.id && user.role !== Role.ADMIN) {
-        throw new ForbiddenException('You do not have permission to delete this post');
-        }
+  async remove(id: number, user: User) {
+    const post = await this.findOne(id);
 
-        await this.postRepository.delete(id);
-            return { message: 'Post deleted successfully' };
+    if (post.authorId !== user.id && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('You do not have permission to delete this post');
     }
 
-    private async findOne(id: number) {
-        const post = await this.postRepository.findOne({
-            where: { id },
-        });
-        if (!post) {
-            throw new NotFoundException('Post not found');
-        }
-        return post;
+    await this.postRepository.delete(id);
+    await this.cacheManager.del('all_posts');
+    return { message: 'Post deleted successfully' };
+  }
+
+  async getAllPosts() {
+    const cacheKey = 'all_posts';
+    let posts = await this.cacheManager.get(cacheKey);
+
+    if (!posts) {
+      posts = await this.postRepository.find();
+      await this.cacheManager.set(cacheKey, posts, 60);
     }
+
+    return posts;
+  }
+
+  async getPostById(id: number) {
+    const post = await this.postRepository.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
+    return post;
+  }
+
+  async getPaginatedPosts(page: number, limit: number) {
+    const [posts, total] = await this.postRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' },
+    });
+    return {
+      data: posts,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
+
+  private async findOne(id: number) {
+    const post = await this.postRepository.findOne({
+      where: { id },
+    });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    return post;
+  }
 }
