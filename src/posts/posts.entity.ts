@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { User } from '../users/users.entity';
 import { Comment } from '../comments/comments.entity';
+import { Like } from '../likes/likes.entity';
+import { Bookmark } from '../bookmark/bookmark.entity';
 
 @Entity('posts')
 export class Post {
@@ -27,13 +29,20 @@ export class Post {
   @JoinColumn({ name: 'authorId' })
   author: User;
 
+  @OneToMany(() => Like, (like) => like.post)
+  likes: Like[];
+
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
+
   @Column({ default: 0 })
   likeCount: number;
 
   @Column({ default: 0 })
   dislikeCount: number;
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 
   @CreateDateColumn()
   createdAt: Date;

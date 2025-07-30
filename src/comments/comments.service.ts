@@ -21,16 +21,13 @@ export class CommentsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async create(
-    postId: number,
-    dto: CreateCommentDto,
-    user: User,
-  ): Promise<Comment> {
-    // const parentCommentId = dto.parent_comment_id ? dto.parent_comment_id : null;
+  async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
     const comment = this.commentsRepo.create({
       content: dto.content,
       postId,
+      authorId: user.id,
     });
+    await this.cacheManager.del(`comments_post_${postId}`);
     return this.commentsRepo.save(comment);
   }
 

@@ -40,6 +40,7 @@ export class Comment {
 
   @OneToMany(() => Comment, comment => comment.parentComment)
   replies: Comment[];
+
   @OneToMany(() => Like, (like) => like.comment)
   likes: Like[];
 
