@@ -20,7 +20,11 @@ export class CommentsController {
     responseStatus: 201,
     responseDesc: 'Reply to a comment successfully',
   })
-  async replyComment(@Param('commentId') commentId: number, @Body() createCommentDto: CreateCommentDto, @Request() req: IRequest) {
+  async replyComment(
+    @Param('commentId') commentId: number,
+    @Body() createCommentDto: CreateCommentDto,
+    @Request() req: IRequest,
+  ) {
     return this.commentsService.replyComment(commentId, createCommentDto, req.user.id);
   }
 

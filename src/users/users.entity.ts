@@ -26,6 +26,7 @@ export class User {
   @OneToMany(() => Post, (post) => post.author) posts: Post[];
   @OneToMany(() => Comment, (comment) => comment.author) comments: Comment[];
   @OneToMany(() => Like, (like) => like.post) likes: Like[];
+  @Column({ nullable: true }) refreshToken?: string;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
 }

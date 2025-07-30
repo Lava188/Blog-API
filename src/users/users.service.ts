@@ -72,4 +72,23 @@ export class UsersService {
       lastPage: Math.ceil(total / limit),
     };
   }
+
+  async saveRefreshToken(userId: number, refreshToken: string) {
+    const user = await this.repo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException(`User with id ${userId} not found`);
+    const hashedToken = await bcrypt.hash(refreshToken, 10);
+    user.refreshToken = hashedToken;
+    return this.repo.save(user);
+  }
+
+  async verifyRefreshToken(refreshToken: string, userId: number) {
+    const user = await this.repo.findOneBy({ id: userId });
+    if (user) {
+      const status = await bcrypt.compare(refreshToken, user.refreshToken);
+      if (status) {
+        return user;
+      }
+    }
+    return false;
+  }
 }

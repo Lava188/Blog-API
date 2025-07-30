@@ -20,7 +20,7 @@ export class AuthService {
     const user = await this.usersService.create({
       email: dto.email,
       password: dto.password,
-      role: dto.role || Role.USER, // Mặc định là USER nếu không có role
+      role: dto.role || Role.USER,
     });
 
     delete user.password;
@@ -52,8 +52,26 @@ export class AuthService {
     }
 
     const payload = { email: user.email, sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    });
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+      const newAccessToken = this.jwtService.sign({ email: payload.email, sub: payload.sub });
+      return { accessToken: newAccessToken };
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }
