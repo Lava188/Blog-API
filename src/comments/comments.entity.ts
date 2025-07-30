@@ -34,6 +34,13 @@ export class Comment {
   @JoinColumn({ name: 'authorId' })
   author: User;
 
+  @ManyToOne(() => Comment, comment => comment.replies, { nullable: true })
+  @JoinColumn({ name: 'parent_comment_id' })
+  parentComment: Comment;
+
+  @OneToMany(() => Comment, comment => comment.parentComment)
+  replies: Comment[];
+
   @OneToMany(() => Like, (like) => like.comment)
   likes: Like[];
 

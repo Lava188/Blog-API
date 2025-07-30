@@ -29,11 +29,11 @@ export class Post {
   @JoinColumn({ name: 'authorId' })
   author: User;
 
-  @OneToMany(() => Comment, (comment) => comment.post)
-  comments: Comment[];
-
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
+
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comments: Comment[];
 
   @Column({ default: 0 })
   likeCount: number;

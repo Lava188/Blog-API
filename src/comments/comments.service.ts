@@ -21,6 +21,31 @@ export class CommentsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
+    const comment = this.commentsRepo.create({
+      content: dto.content,
+      postId,
+      authorId: user.id,
+    });
+    await this.cacheManager.del(`comments_post_${postId}`);
+    return this.commentsRepo.save(comment);
+  }
+
+  async replyComment(commentId: number, createCommentDto: CreateCommentDto, userId: number) {
+    const parentComment = await this.commentsRepo.findOne({ where: { id: commentId } });
+    if (!parentComment) {
+      throw new Error('Parent comment not found');
+    }
+
+    const newComment = this.commentsRepo.create({
+      ...createCommentDto,
+      authorId: userId,
+    });
+
+    await this.commentsRepo.save(newComment);
+    return { message: 'Comment replied successfully', data: newComment };
+  }
+
   async likeComment(commentId: number, userId: number): Promise<LikeDto> {
     const comment = await this.commentsRepo.findOne({ where: { id: commentId } });
 
@@ -62,16 +87,6 @@ export class CommentsService {
     const comment = (await this.commentsRepo.findOneBy({ id })) ?? undefined;
     if (!comment) throw new NotFoundException(`Comment #${id} not found`);
     return comment;
-  }
-
-  async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
-    const comment = this.commentsRepo.create({
-      content: dto.content,
-      postId,
-      authorId: user.id,
-    });
-    await this.cacheManager.del(`comments_post_${postId}`);
-    return this.commentsRepo.save(comment);
   }
 
   async update(id: number, dto: EditCommentDto, user: User): Promise<Comment> {

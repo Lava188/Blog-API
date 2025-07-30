@@ -14,6 +14,16 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
+  @Post(':commentId/reply')
+  @AuthPrivate({
+    summary: 'Reply to a comment',
+    responseStatus: 201,
+    responseDesc: 'Reply to a comment successfully',
+  })
+  async replyComment(@Param('commentId') commentId: number, @Body() createCommentDto: CreateCommentDto, @Request() req: IRequest) {
+    return this.commentsService.replyComment(commentId, createCommentDto, req.user.id);
+  }
+
   @Get('all')
   @AuthPublic({
     summary: 'Get all comments',
