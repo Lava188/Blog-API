@@ -5,6 +5,9 @@ import { Post } from './posts.entity';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { Express } from 'express';
 import { Like } from '../likes/likes.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { LikeDto } from '../likes/dto/like.dto';
@@ -22,10 +25,22 @@ export class PostsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async create(createPostDto: CreatePostDto, userId: number) {
+  async create(createPostDto: CreatePostDto, userId: number, image?: Express.Multer.File) {
+    let imagePath: string | undefined = undefined;
+    if (image) {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+      }
+      const fileName = `${Date.now()}_${image.originalname}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, image.buffer);
+      imagePath = `uploads/${fileName}`;
+    }
     const post = this.postRepository.create({
       ...createPostDto,
       authorId: userId,
+      image: imagePath,
     });
     await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);

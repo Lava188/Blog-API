@@ -1,8 +1,11 @@
-import { Controller, Post, Body, Param, Patch, Delete, Request, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Request, UseInterceptors, UploadedFile, ParseFilePipe, FileTypeValidator, Query } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
 import { IRequest } from '../common/interface/request.interface';
 import { User } from '../users/users.entity';
 import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
@@ -20,10 +23,20 @@ export class PostsController {
     responseStatus: 201,
     responseDesc: 'Create a post successfully',
   })
+  @UseInterceptors(FileInterceptor('image'))
   @Post()
-  async createPost(@Body() createPostDto: CreatePostDto, @Request() req: IRequest) {
+  async createPost(
+    @Body() createPostDto: CreatePostDto,
+    @UploadedFile(
+      new ParseFilePipe({
+          validators: [
+              new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|bmp|webp)$/ })
+          ],
+      })
+  ) image: Express.Multer.File, 
+  @Request() req: IRequest) {
     try {
-      return await this.postsService.create(createPostDto, Number(req.user.id));
+      return await this.postsService.create(createPostDto, Number(req.user.id), image);
     } catch (err) {
       console.error('[POST /posts] createPost error:', err);
       throw err;
