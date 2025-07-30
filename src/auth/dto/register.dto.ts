@@ -1,11 +1,5 @@
-import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  MinLength,
-} from 'class-validator';
-import { Role } from 'src/users/users.entity';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
+import { Role } from '../../users/users.entity';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Invalid email address' })

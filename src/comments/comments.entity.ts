@@ -1,3 +1,4 @@
+import { Like } from '../likes/likes.entity';
 import { Post } from '../posts/posts.entity';
 import { User } from '../users/users.entity';
 import {
@@ -39,6 +40,8 @@ export class Comment {
 
   @OneToMany(() => Comment, comment => comment.parentComment)
   replies: Comment[];
+  @OneToMany(() => Like, (like) => like.comment)
+  likes: Like[];
 
   @Column({ default: 0 })
   likeCount: number;

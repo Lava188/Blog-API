@@ -17,6 +17,8 @@ export class Post {
 
   @Column() title: string;
   @Column('text') content: string;
+  @Column({ nullable: true })
+  image?: string;
 
   @Column()
   authorId: number;
@@ -27,7 +29,6 @@ export class Post {
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
-
   @Column({ default: 0 })
   likeCount: number;
 

@@ -1,11 +1,4 @@
-import { IsString, IsNotEmpty, IsInt } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateCommentDto } from './create-comments.dto';
 
-export class EditCommentDto {
-  // @IsInt()
-  // @IsNotEmpty()
-  // postId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  content: string;
-}
+export class EditCommentDto extends PartialType(CreateCommentDto) {}
