@@ -57,6 +57,7 @@ export class AuthService {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
     });
+    await this.usersService.saveRefreshToken(user.id, refreshToken);
     return {
       accessToken,
       refreshToken,
