@@ -1,34 +1,28 @@
-import { Comment } from "../comments/comments.entity";
-import { Post } from "../posts/posts.entity";
-import { User } from "../users/users.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Comment } from '../comments/comments.entity';
+import { Post } from '../posts/posts.entity';
+import { User } from '../users/users.entity';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('likes')
 export class Like {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    postId: number;
+  @Column({ default: true })
+  isLike: boolean;
 
-    @Column()
-    commentId: number;
+  @ManyToOne(() => Post, (post) => post.likes, { nullable: true })
+  @JoinColumn({ name: 'post_id' })
+  post: Post;
 
-    @Column()
-    userId: number;
+  @ManyToOne(() => Comment, (comment) => comment.likes, { nullable: true })
+  @JoinColumn({ name: 'comment_id' })
+  comment: Comment;
 
-    @ManyToOne(() => Post, post => post.likes, { nullable: true })
-    @JoinColumn({ name: 'post_id' })
-    post: Post;
+  @ManyToOne(() => User, (user) => user.likes)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-    @ManyToOne(() => Comment, comment => comment.likes, { nullable: true })
-    @JoinColumn({ name: 'comment_id' })
-    comment: Comment;
-
-    @ManyToOne(() => User, user => user.likes)
-    @JoinColumn({ name: 'user_id' })
-    user: User;
-
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 }
