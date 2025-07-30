@@ -8,6 +8,7 @@ import { User } from '../users/users.entity';
 import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Throttle({ default: { limit: 5, ttl: 60000 } })
 @Controller('posts')
@@ -90,7 +91,7 @@ export class PostsController {
     responseDesc: 'Get all posts with pagination successfully',
   })
   @Get()
-  async getPosts(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
-    return this.postsService.getPaginatedPosts(page, limit);
+  async getPosts(@Query() query: PaginationQueryDto) {
+    return this.postsService.getPaginatedPosts(query.page ?? 1, query.limit ?? 10);
   }
 }

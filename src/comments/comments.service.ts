@@ -80,7 +80,7 @@ export class CommentsService {
     if (comment.authorId !== user.id) {
       throw new ForbiddenException(`You can only edit your own comments.`);
     }
-    comment.content = dto.content;
+    comment.content = dto.content ?? comment.content;
     await this.cacheManager.del(`comments_post_${comment.postId}`);
     return this.commentsRepo.save(comment);
   }

@@ -7,13 +7,14 @@ import { User } from '../users/users.entity';
 import { GetDisLikeCommentDto, GetLikeCommentDto } from './dto/get-like-comment.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('posts/:postId/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
-  @Get()
+  @Get('all')
   @AuthPublic({
     summary: 'Get all comments',
     responseStatus: 200,
@@ -23,18 +24,14 @@ export class CommentsController {
     return this.commentsService.findAllByPost(postId);
   }
 
-  @Get('post/:postId')
+  @Get()
   @AuthPublic({
     summary: 'Get paginated comments by post',
     responseStatus: 200,
     responseDesc: 'Get paginated comments by post successfully',
   })
-  async getCommentsByPost(
-    @Param('postId') postId: number,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    return this.commentsService.getPaginatedCommentsByPost(Number(postId), page, limit);
+  async getCommentsByPost(@Param('postId') postId: number, @Query() query: PaginationQueryDto) {
+    return this.commentsService.getPaginatedCommentsByPost(Number(postId), query.page ?? 1, query.limit ?? 10);
   }
 
   @AuthPrivate({

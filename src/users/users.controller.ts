@@ -16,6 +16,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate } from '../common/auth.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
@@ -40,11 +41,11 @@ export class UsersController {
     responseStatus: 200,
     responseDesc: 'Get all users successfully',
   })
-  async getUsers(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
-    return this.svc.getPaginatedUsers(page, limit);
+  async getUsers(@Query() query: PaginationQueryDto) {
+    return this.svc.getPaginatedUsers(query.page ?? 1, query.limit ?? 10);
   }
 
-  @Get(':id')
+  @Get('id/:id')
   @AuthPrivate({
     summary: 'Get a user by id',
     responseStatus: 200,
@@ -54,7 +55,7 @@ export class UsersController {
     return this.svc.findOne(id);
   }
 
-  @Get(':email')
+  @Get('email/:email')
   @AuthPrivate({
     summary: 'Get a user by email',
     responseStatus: 200,
