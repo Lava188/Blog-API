@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
-import { Role } from '../users/users.entity';
+import { Role, Status } from '../users/users.entity';
+import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -14,12 +15,20 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    // const hash = await bcrypt.hash(dto.password, 10);
-    // console.log('>> Hash lúc tạo:', hash);
+    const existingUserByName = await this.usersService.findByName(dto.name);
+    if (existingUserByName) {
+      throw new BadRequestException('Name is already taken');
+    }
+
+    const existingUserByEmail = await this.usersService.findByEmail(dto.email);
+    if (existingUserByEmail) {
+      throw new BadRequestException('Email is already registered');
+    }
 
     const user = await this.usersService.create({
       email: dto.email,
       password: dto.password,
+      name: dto.name,
       role: dto.role || Role.USER,
     });
 
@@ -50,6 +59,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    await this.usersService.updateStatus(user.id, Status.ACTIVE);
 
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
@@ -57,7 +67,6 @@ export class AuthService {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
     });
-    await this.usersService.saveRefreshToken(user.id, refreshToken);
     return {
       accessToken,
       refreshToken,
@@ -74,5 +83,14 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async logout(userId: number, dto: LogoutDto) {
+    const user = await this.usersService.findByEmail(String(dto.email));
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    await this.usersService.updateStatus(userId, Status.INACTIVE);
+    return { message: 'Logged out' };
   }
 }

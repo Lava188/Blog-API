@@ -20,6 +20,7 @@ import { AuthPrivate } from '../common/auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { IRequest } from '../common/interface/request.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
@@ -68,17 +69,6 @@ export class UsersController {
     return this.svc.findByEmail(email);
   }
 
-  @Patch(':id')
-  @AuthPrivate({
-    summary: 'Update a user',
-    responseStatus: 200,
-    responseDesc: 'Update a user successfully',
-  })
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.svc.update(id, dto);
-  }
-
   @Patch('profile')
   @AuthPrivate({
     summary: 'Update user profile',
@@ -97,5 +87,26 @@ export class UsersController {
   })
   remove(@Param('id') id: string) {
     return this.svc.remove(id);
+  }
+
+  @Patch('change-password')
+  @AuthPrivate({
+    summary: 'Change user password',
+    responseStatus: 200,
+    responseDesc: 'Change user password successfully',
+  })
+  async changePassword(@Body() dto: ChangePasswordDto, @Request() req: IRequest) {
+    return this.svc.changePassword(req.user.id, dto.oldPassword, dto.newPassword);
+  }
+
+  @Patch(':id')
+  @AuthPrivate({
+    summary: 'Update a user',
+    responseStatus: 200,
+    responseDesc: 'Update a user successfully',
+  })
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.svc.update(id, dto);
   }
 }

@@ -25,6 +25,7 @@ export class User {
   @Column({ unique: true }) email: string;
   @Column() password?: string;
   @Column({ type: 'enum', enum: Role, default: Role.USER }) role: Role;
+  @Column({ type: 'enum', enum: Status, default: Status.INACTIVE }) status: Status;
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user) bookmarks: Bookmark[];
   @OneToMany(() => Post, (post) => post.author) posts: Post[];
   @OneToMany(() => Comment, (comment) => comment.author) comments: Comment[];

@@ -9,6 +9,7 @@ import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Status } from './users.entity';
 
 @Injectable()
 export class UsersService {
@@ -49,6 +50,11 @@ export class UsersService {
     return user || null;
   }
 
+  async findByName(name: string): Promise<User | null> {
+    const user = await this.repo.findOneBy({ name });
+    return user || null;
+  }
+
   async update(id: string, dto: UpdateUserDto): Promise<User> {
     await this.repo.update(id, dto);
     await this.cacheManager.del('all_users');
@@ -83,22 +89,17 @@ export class UsersService {
     return user;
   }
 
-  async saveRefreshToken(userId: number, refreshToken: string) {
-    const user = await this.repo.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException(`User with id ${userId} not found`);
-    const hashedToken = await bcrypt.hash(refreshToken, 10);
-    user.refreshToken = hashedToken;
-    return this.repo.save(user);
+  async updateStatus(userId: number, status: Status) {
+    await this.repo.update(userId, { status });
   }
 
-  async verifyRefreshToken(refreshToken: string, userId: number) {
+  async changePassword(userId: number, oldPassword: string, newPassword: string) {
     const user = await this.repo.findOneBy({ id: userId });
-    if (user) {
-      const status = await bcrypt.compare(refreshToken, user.refreshToken);
-      if (status) {
-        return user;
-      }
-    }
-    return false;
+    if (!user) throw new NotFoundException('User not found');
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) throw new BadRequestException('Old password is incorrect');
+    user.password = await bcrypt.hash(newPassword, 10);
+    await this.repo.save(user);
+    return { message: 'Password changed successfully' };
   }
 }

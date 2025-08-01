@@ -15,6 +15,12 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { NotificationsModule } from './notifications/notifications.module';
 import { LoggerMiddleware } from './common/logger.middleware';
 import { typeOrmConfig } from './common/database.config';
+import { EmailModule } from './email/email.module';
+import { EmailController } from './module/email/email.controller';
+import { EmailService } from './module/email/email.service';
+import { EmailService } from './email/email.service';
+import { EmailController } from './email/email.controller';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -53,8 +59,9 @@ import { typeOrmConfig } from './common/database.config';
         limit: 1500,
       },
     ]),
+    EmailModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, EmailController],
   providers: [
     AppService,
     {
@@ -65,6 +72,7 @@ import { typeOrmConfig } from './common/database.config';
       provide: 'APP_GUARD',
       useClass: ThrottlerGuard,
     },
+    EmailService,
   ],
 })
 export class AppModule implements NestModule {
