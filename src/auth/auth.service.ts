@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -6,12 +6,14 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { Role, Status } from '../users/users.entity';
 import { LogoutDto } from './dto/logout.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -92,5 +94,23 @@ export class AuthService {
     }
     await this.usersService.updateStatus(userId, Status.INACTIVE);
     return { message: 'Logged out' };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    await this.emailService.sendResetPasswordLink(email);
+  }
+
+  async resetPassword(token: string, password: string) {
+    const email = await this.emailService.decodeConfirmationToken(token);
+    const user = await this.usersService.findByEmail(String(email));
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.password = password;
+    delete user.resetPasswordToken;
   }
 }

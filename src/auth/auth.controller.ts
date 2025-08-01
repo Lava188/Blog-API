@@ -74,4 +74,14 @@ export class AuthController {
     });
     return { message: 'Logged out' };
   }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() { email }: { email: string }) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() { token, password }: { token: string; password: string }) {
+    return this.authService.resetPassword(token, password);
+  }
 }

@@ -33,4 +33,6 @@ export class User {
   @Column({ nullable: true }) refreshToken?: string;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
+  @Column({ nullable: true }) resetPasswordToken?: string;
+  @Column({ nullable: true }) resetPasswordExpires?: Date;
 }
