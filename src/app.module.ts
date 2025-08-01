@@ -15,6 +15,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { NotificationsModule } from './notifications/notifications.module';
 import { LoggerMiddleware } from './common/logger.middleware';
 import { typeOrmConfig } from './common/database.config';
+import { EmailController } from './email/email.controller';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -53,8 +55,9 @@ import { typeOrmConfig } from './common/database.config';
         limit: 1500,
       },
     ]),
+    EmailModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, EmailController],
   providers: [
     AppService,
     {

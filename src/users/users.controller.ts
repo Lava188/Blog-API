@@ -10,6 +10,7 @@ import {
   UsePipes,
   ValidationPipe,
   Query,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,6 +18,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate } from '../common/auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { IRequest } from '../common/interface/request.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
@@ -65,15 +69,14 @@ export class UsersController {
     return this.svc.findByEmail(email);
   }
 
-  @Patch(':id')
+  @Patch('profile')
   @AuthPrivate({
-    summary: 'Update a user',
+    summary: 'Update user profile',
     responseStatus: 200,
-    responseDesc: 'Update a user successfully',
+    responseDesc: 'Update user profile successfully',
   })
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.svc.update(id, dto);
+  async updateProfile(@Body() dto: UpdateProfileDto, @Request() req: IRequest) {
+    return this.svc.updateProfile(req.user.id.toString(), dto);
   }
 
   @Delete(':id')
@@ -84,5 +87,26 @@ export class UsersController {
   })
   remove(@Param('id') id: string) {
     return this.svc.remove(id);
+  }
+
+  @Patch('change-password')
+  @AuthPrivate({
+    summary: 'Change user password',
+    responseStatus: 200,
+    responseDesc: 'Change user password successfully',
+  })
+  async changePassword(@Body() dto: ChangePasswordDto, @Request() req: IRequest) {
+    return this.svc.changePassword(req.user.id, dto.oldPassword, dto.newPassword);
+  }
+
+  @Patch(':id')
+  @AuthPrivate({
+    summary: 'Update a user',
+    responseStatus: 200,
+    responseDesc: 'Update a user successfully',
+  })
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.svc.update(id, dto);
   }
 }
