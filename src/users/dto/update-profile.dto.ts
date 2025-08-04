@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 export class UpdateProfileDto {
   @IsString()
   @MaxLength(50)
-  fullName: string;
+  name: string;
 
   @IsOptional()
   @IsUrl({}, { message: 'Avatar must be a valid URL' })

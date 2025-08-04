@@ -55,6 +55,11 @@ export class UsersService {
     return user || null;
   }
 
+  async findOneByEmailOrName(email: string, name: string): Promise<User | null> {
+    const user = await this.repo.findOneBy({ email, name });
+    return user || null;
+  }
+
   async update(id: string, dto: UpdateUserDto): Promise<User> {
     await this.repo.update(id, dto);
     await this.cacheManager.del('all_users');

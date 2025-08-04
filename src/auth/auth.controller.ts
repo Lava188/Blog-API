@@ -1,11 +1,11 @@
 import { Body, Controller, Post, Res, UnauthorizedException, UsePipes, ValidationPipe, Req } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
-import { LogoutDto } from './dto/logout.dto';
+import { MessageResponseDto } from '../common/dto/message-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -61,11 +61,7 @@ export class AuthController {
     responseStatus: 200,
     responseDesc: 'Logout successfully',
   })
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Body() dto: LogoutDto) {
-    const userId = (req.user as { id?: number })?.id;
-    if (userId) {
-      await this.authService.logout(userId, dto);
-    }
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<MessageResponseDto> {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: false, //false if deploy in localhost, true if deploy through https
@@ -76,11 +72,13 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @ApiResponse({ status: 200, type: MessageResponseDto, description: 'Forgot password' })
   async forgotPassword(@Body() { email }: { email: string }) {
     return this.authService.forgotPassword(email);
   }
 
   @Post('reset-password')
+  @ApiResponse({ status: 200, type: MessageResponseDto, description: 'Reset password' })
   async resetPassword(@Body() { token, password }: { token: string; password: string }) {
     return this.authService.resetPassword(token, password);
   }

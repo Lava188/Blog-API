@@ -17,16 +17,18 @@ import { LoggerMiddleware } from './common/logger.middleware';
 import { typeOrmConfig } from './common/database.config';
 import { EmailController } from './email/email.controller';
 import { EmailModule } from './email/email.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: typeOrmConfig,
     }),
     UsersModule,
+    EventEmitterModule.forRoot(),
     AuthModule,
     CommentsModule,
     PostsModule,

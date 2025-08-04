@@ -19,15 +19,28 @@ export class EmailService {
     private readonly jwtService: JwtService,
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
   ) {
-    this.nodemailerTransport = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: configService.get('EMAIL_USER'),
-        pass: configService.get('EMAIL_PASSWORD'),
-      },
-    });
+    // check if app deploys in localhost
+    if (this.configService.get('NODE_ENV') === 'development') {
+      this.nodemailerTransport = nodemailer.createTransport({
+        // host: this.configService.get('MAILTRAP_HOST'),
+        // port: Number(this.configService.get('MAILTRAP_PORT')),
+        // auth: {
+        //   user: this.configService.get('MAILTRAP_USER'),
+        //   pass: this.configService.get('MAILTRAP_PASS'),
+        // },
+        jsonTransport: true,
+      });
+    } else {
+      this.nodemailerTransport = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: configService.get('EMAIL_USER'),
+          pass: configService.get('EMAIL_PASSWORD'),
+        },
+      });
+    }
   }
 
   private sendMail(options: Mail.Options) {
@@ -36,16 +49,18 @@ export class EmailService {
   }
 
   public async sendResetPasswordLink(email: string) {
+    const user = await this.usersRepo.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     const payload = { email };
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
       expiresIn: `${this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME')}`,
     });
-    const user = await this.usersRepo.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
     user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await this.usersRepo.save(user);
     const url = `${this.configService.get('EMAIL_RESET_PASSWORD_URL')}?token=${token}`;
     const text = `Hi, \nTo reset your password, click here: ${url}`;
 
@@ -56,15 +71,17 @@ export class EmailService {
     });
   }
 
-  public async decodeConfirmationToken(token: string) {
+  public async decodeConfirmationToken(token: string): Promise<string> {
     try {
-      const payload = await this.jwtService.verify(token, {
+      const payload = await this.jwtService.verify<{ email: string }>(token, {
         secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
       });
-      if (typeof payload === 'object' && 'email' in payload) {
+
+      if (payload && typeof payload === 'object' && 'email' in payload) {
         return payload.email;
       }
-      throw new BadRequestException();
+
+      throw new BadRequestException('Token payload invalid');
     } catch (error) {
       if (error?.name === 'TokenExpiredError') {
         throw new BadRequestException('Email confirmation token expired');

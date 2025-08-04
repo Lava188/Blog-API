@@ -98,8 +98,9 @@ export class CommentsController {
     responseDesc: 'Update a comment successfully',
   })
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: EditCommentDto, @Request() req: IRequest) {
-    return this.commentsService.update(id, dto, req.user as User);
+  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: EditCommentDto, @Request() req: IRequest) {
+    await this.commentsService.update(id, dto, req.user as User);
+    return { message: 'Comment updated successfully' };
   }
 
   @AuthPrivate({
@@ -108,7 +109,8 @@ export class CommentsController {
     responseDesc: 'Delete a comment successfully',
   })
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req: IRequest) {
-    return this.commentsService.remove(id, req.user as User);
+  async remove(@Param('id', ParseIntPipe) id: number, @Request() req: IRequest) {
+    await this.commentsService.remove(id, req.user as User);
+    return { message: 'Comment deleted successfully' };
   }
 }

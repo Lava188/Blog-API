@@ -4,9 +4,10 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
-import { Role, Status } from '../users/users.entity';
-import { LogoutDto } from './dto/logout.dto';
+import { Role, User } from '../users/users.entity';
 import { EmailService } from '../email/email.service';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
@@ -14,17 +15,18 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    @InjectRepository(User) private readonly usersRepository: Repository<User>,
   ) {}
 
   async register(dto: RegisterDto) {
-    const existingUserByName = await this.usersService.findByName(dto.name);
-    if (existingUserByName) {
-      throw new BadRequestException('Name is already taken');
-    }
-
-    const existingUserByEmail = await this.usersService.findByEmail(dto.email);
-    if (existingUserByEmail) {
-      throw new BadRequestException('Email is already registered');
+    const existingUser = await this.usersService.findOneByEmailOrName(dto.email, dto.name);
+    if (existingUser) {
+      if (existingUser.email === dto.email) {
+        throw new BadRequestException('Email is already registered');
+      }
+      if (existingUser.name === dto.name) {
+        throw new BadRequestException('Name is already taken');
+      }
     }
 
     const user = await this.usersService.create({
@@ -61,7 +63,6 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    await this.usersService.updateStatus(user.id, Status.ACTIVE);
 
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
@@ -87,30 +88,25 @@ export class AuthService {
     }
   }
 
-  async logout(userId: number, dto: LogoutDto) {
-    const user = await this.usersService.findByEmail(String(dto.email));
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    await this.usersService.updateStatus(userId, Status.INACTIVE);
-    return { message: 'Logged out' };
-  }
-
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     await this.emailService.sendResetPasswordLink(email);
+    return { message: 'Verify code has been sent to email' };
   }
 
   async resetPassword(token: string, password: string) {
     const email = await this.emailService.decodeConfirmationToken(token);
-    const user = await this.usersService.findByEmail(String(email));
+    const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    user.password = password;
+    user.password = await bcrypt.hash(password, 10);
     delete user.resetPasswordToken;
+    delete user.resetPasswordExpires;
+    await this.usersRepository.save(user);
+    return { message: 'Password reset success' };
   }
 }
