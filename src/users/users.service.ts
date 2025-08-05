@@ -96,8 +96,12 @@ export class UsersService {
     return user;
   }
 
-  async updateStatus(userId: number, status: Status) {
-    await this.repo.update(userId, { status });
+  async updateStatusByEmail(email: string, status: Status) {
+    const user = await this.repo.findOneBy({ email });
+    if (!user) throw new NotFoundException('User not found');
+    user.status = status;
+    await this.repo.save(user);
+    return user;
   }
 
   async changePassword(userId: number, oldPassword: string, newPassword: string) {

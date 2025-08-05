@@ -6,11 +6,19 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
 import { MessageResponseDto } from '../common/dto/message-response.dto';
+import { Status } from '../users/users.entity';
+import { UsersService } from '../users/users.service';
+import { LogoutDto } from './dto/logout.dto';
+import { ActivityLogService } from '../users/activity-log.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @Post('register')
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -32,6 +40,13 @@ export class AuthController {
   })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken } = await this.authService.login(dto);
+    await this.usersService.updateStatusByEmail(dto.email, Status.ACTIVE);
+
+    const user = await this.usersService.findByEmail(dto.email);
+    if (user) {
+      await this.activityLogService.log(user.id, 'login', { ip: res.req?.ip });
+    }
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false,
@@ -61,7 +76,18 @@ export class AuthController {
     responseStatus: 200,
     responseDesc: 'Logout successfully',
   })
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<MessageResponseDto> {
+  async logout(
+    @Body() dto: LogoutDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<MessageResponseDto> {
+    await this.usersService.updateStatusByEmail(String(dto.email), Status.INACTIVE);
+
+    const user = await this.usersService.findByEmail(String(dto.email));
+    if (user) {
+      await this.activityLogService.log(user.id, 'logout', { ip: req.ip });
+    }
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: false, //false if deploy in localhost, true if deploy through https

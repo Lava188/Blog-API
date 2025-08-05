@@ -21,11 +21,16 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { IRequest } from '../common/interface/request.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ActivityLogService } from './activity-log.service';
+import { Role } from './users.entity';
 
 @Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
 export class UsersController {
-  constructor(private readonly svc: UsersService) {}
+  constructor(
+    private readonly svc: UsersService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @Throttle({ default: { limit: 2, ttl: 10000 } })
   @Post()
@@ -108,5 +113,26 @@ export class UsersController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.svc.update(id, dto);
+  }
+
+  @Get('activity-log')
+  @AuthPrivate({
+    summary: 'Get user activity log',
+    responseStatus: 200,
+    responseDesc: 'Get user activity log successfully',
+  })
+  async getActivityLog(@Request() req: IRequest) {
+    return this.activityLogService.getLogsByUser(req.user.id);
+  }
+
+  @Get('activity-log/:userId')
+  @AuthPrivate({
+    summary: 'Get activity log of a specific user (admin only)',
+    responseStatus: 200,
+    responseDesc: 'Get specific user activity log successfully',
+    roles: [Role.ADMIN],
+  })
+  async getActivityLogByUserId(@Param('userId') userId: string, @Request() req: IRequest) {
+    return this.activityLogService.getLogsByUser(req.user.id);
   }
 }
