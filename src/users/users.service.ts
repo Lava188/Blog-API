@@ -56,7 +56,9 @@ export class UsersService {
   }
 
   async findOneByEmailOrName(email: string, name: string): Promise<User | null> {
-    const user = await this.repo.findOneBy({ email, name });
+    const user = await this.repo.findOne({
+      where: [{ email }, { name }],
+    });
     return user || null;
   }
 

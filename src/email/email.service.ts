@@ -59,16 +59,22 @@ export class EmailService {
       expiresIn: `${this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME')}`,
     });
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
     await this.usersRepo.save(user);
     const url = `${this.configService.get('EMAIL_RESET_PASSWORD_URL')}?token=${token}`;
     const text = `Hi, \nTo reset your password, click here: ${url}`;
 
-    return this.sendMail({
+    await this.sendMail({
       to: email,
       subject: 'Reset password',
       text,
     });
+
+    // deploy in localhost
+    if (this.configService.get('NODE_ENV') === 'development') {
+      return { message: 'Verify code has been sent to email', token, url };
+    }
+    return { message: 'Verify code has been sent to email' };
   }
 
   public async decodeConfirmationToken(token: string): Promise<string> {

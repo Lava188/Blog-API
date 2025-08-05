@@ -21,12 +21,9 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const existingUser = await this.usersService.findOneByEmailOrName(dto.email, dto.name);
     if (existingUser) {
-      if (existingUser.email === dto.email) {
-        throw new BadRequestException('Email is already registered');
-      }
-      if (existingUser.name === dto.name) {
-        throw new BadRequestException('Name is already taken');
-      }
+      throw new BadRequestException(
+        existingUser.email === dto.email ? 'Email is already registered' : 'Name is already taken',
+      );
     }
 
     const user = await this.usersService.create({
@@ -102,6 +99,14 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    if (
+      !user.resetPasswordToken ||
+      user.resetPasswordToken !== token ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      throw new BadRequestException('Token is invalid or has expired');
     }
     user.password = await bcrypt.hash(password, 10);
     delete user.resetPasswordToken;
