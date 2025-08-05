@@ -90,8 +90,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    await this.emailService.sendResetPasswordLink(email);
-    return { message: 'Verify code has been sent to email' };
+    return await this.emailService.sendResetPasswordLink(email);
   }
 
   async resetPassword(token: string, password: string) {
