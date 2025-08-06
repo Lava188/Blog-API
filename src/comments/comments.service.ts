@@ -10,6 +10,8 @@ import { LikeDto } from '../likes/dto/like.dto';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PostsService } from '../posts/posts.service';
 
 @Injectable()
 export class CommentsService {
@@ -19,6 +21,8 @@ export class CommentsService {
     @InjectRepository(Like)
     private readonly likesRepo: Repository<Like>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly notificationService: NotificationsService,
+    private readonly postsService: PostsService,
   ) {}
 
   async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
@@ -27,6 +31,14 @@ export class CommentsService {
       postId,
       authorId: user.id,
     });
+    const post = await this.postsService.getPostById(postId);
+    if (post.authorId != user.id) {
+      await this.notificationService.create(
+        post.author, // recipient
+        'comment',
+        `User ${comment.author} vừa bình luận vào bài viết "${post.title}"`,
+      );
+    }
     await this.cacheManager.del(`comments_post_${postId}`);
     return this.commentsRepo.save(comment);
   }
