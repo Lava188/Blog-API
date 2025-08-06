@@ -132,7 +132,7 @@ export class UsersController {
     responseDesc: 'Get specific user activity log successfully',
     roles: [Role.ADMIN],
   })
-  async getActivityLogByUserId(@Param('userId') userId: string, @Request() req: IRequest) {
-    return this.activityLogService.getLogsByUser(req.user.id);
+  async getActivityLogByUserId(@Param('userId') userId: string) {
+    return this.activityLogService.getLogsByUser(Number(userId));
   }
 }
