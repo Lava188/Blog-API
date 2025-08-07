@@ -8,6 +8,8 @@ import { Role, User } from '../users/users.entity';
 import { EmailService } from '../email/email.service';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ResetPasswordDto } from '../users/dto/reset-password.dto';
+import { ForgotPasswordDto } from '../users/dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -85,29 +87,29 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(email: string) {
-    const user = await this.usersService.findByEmail(email);
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return await this.emailService.sendResetPasswordLink(email);
+    return await this.emailService.sendResetPasswordLink(user);
   }
 
-  async resetPassword(token: string, password: string) {
-    const email = await this.emailService.decodeConfirmationToken(token);
+  async resetPassword(dto: ResetPasswordDto) {
+    const email = await this.emailService.decodeConfirmationToken(dto.token);
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     if (
       !user.resetPasswordToken ||
-      user.resetPasswordToken !== token ||
+      user.resetPasswordToken !== dto.token ||
       !user.resetPasswordExpires ||
       user.resetPasswordExpires < new Date()
     ) {
       throw new BadRequestException('Token is invalid or has expired');
     }
-    user.password = await bcrypt.hash(password, 10);
+    user.password = await bcrypt.hash(dto.password, 10);
     delete user.resetPasswordToken;
     delete user.resetPasswordExpires;
     await this.usersRepository.save(user);

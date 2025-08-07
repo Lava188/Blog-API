@@ -10,6 +10,8 @@ import { Status } from '../users/users.entity';
 import { UsersService } from '../users/users.service';
 import { LogoutDto } from './dto/logout.dto';
 import { ActivityLogService } from '../users/activity-log.service';
+import { ResetPasswordDto } from '../users/dto/reset-password.dto';
+import { ForgotPasswordDto } from '../users/dto/forgot-password.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -99,13 +101,13 @@ export class AuthController {
 
   @Post('forgot-password')
   @ApiResponse({ status: 200, type: MessageResponseDto, description: 'Forgot password' })
-  async forgotPassword(@Body() { email }: { email: string }) {
-    return this.authService.forgotPassword(email);
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
   }
 
   @Post('reset-password')
   @ApiResponse({ status: 200, type: MessageResponseDto, description: 'Reset password' })
-  async resetPassword(@Body() { token, password }: { token: string; password: string }) {
-    return this.authService.resetPassword(token, password);
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 }

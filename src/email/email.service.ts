@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as nodemailer from 'nodemailer';
@@ -8,6 +8,8 @@ import { Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from '../users/users.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as ejs from 'ejs';
+import * as path from 'path';
 
 @Injectable()
 export class EmailService {
@@ -48,29 +50,27 @@ export class EmailService {
     return this.nodemailerTransport.sendMail(options);
   }
 
-  public async sendResetPasswordLink(email: string) {
-    const user = await this.usersRepo.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    const payload = { email };
+  public async sendResetPasswordLink(user: User) {
+    const payload = { email: user.email };
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
       expiresIn: `${this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME')}`,
     });
+    const expiresIn = parseInt(this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME') || '3600');
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+    user.resetPasswordExpires = new Date(Date.now() + expiresIn * 1000);
     await this.usersRepo.save(user);
     const url = `${this.configService.get('EMAIL_RESET_PASSWORD_URL')}?token=${token}`;
-    const text = `Hi, \nTo reset your password, click here: ${url}`;
+    const expiresInMinutes = Math.floor(expiresIn / 60);
+    const templatePath = path.join(process.cwd(), 'src', 'email', 'resetPasswordLink.ejs');
+    const html = await ejs.renderFile(templatePath, { url, expiresInMinutes });
 
     await this.sendMail({
-      to: email,
+      to: user.email,
       subject: 'Reset password',
-      text,
+      html,
     });
 
-    // deploy in localhost
     if (this.configService.get('NODE_ENV') === 'development') {
       return { message: 'Verify code has been sent to email', token, url };
     }

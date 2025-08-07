@@ -17,7 +17,6 @@ import { LoggerMiddleware } from './common/logger.middleware';
 import { typeOrmConfig } from './common/database.config';
 import { EmailController } from './email/email.controller';
 import { EmailModule } from './email/email.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -28,7 +27,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       useFactory: typeOrmConfig,
     }),
     UsersModule,
-    EventEmitterModule.forRoot(),
     AuthModule,
     CommentsModule,
     PostsModule,
