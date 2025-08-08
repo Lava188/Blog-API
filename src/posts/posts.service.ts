@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Post } from './posts.entity';
+import { Post, PostStatus } from './posts.entity';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
@@ -43,6 +43,7 @@ export class PostsService {
       ...createPostDto,
       authorId: userId,
       image: imagePath,
+      status: PostStatus.PENDING,
     });
     await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);
@@ -89,7 +90,19 @@ export class PostsService {
       throw new ForbiddenException('You do not have permission to edit this post');
     }
 
-    Object.assign(post, editPostDto);
+    if (user.role !== Role.ADMIN) {
+      const { title, content } = editPostDto;
+      Object.assign(post, { title, content });
+    } else {
+      Object.assign(post, editPostDto);
+      if (editPostDto.status === PostStatus.PUBLISHED) {
+        post.publishedAt = post.publishedAt ?? new Date();
+      }
+      if (editPostDto.status === PostStatus.REJECTED) {
+        post.publishedAt = null;
+      }
+    }
+
     await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);
   }
@@ -112,7 +125,7 @@ export class PostsService {
 
     if (!posts) {
       posts = await this.postRepository.find();
-      await this.cacheManager.set(cacheKey, posts, 60);
+      await this.cacheManager.set(cacheKey, posts, 60_000);
     }
 
     return posts;

@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Param, Request } from '@nestjs/common';
+import { Controller, Post, Delete, Param, Request, Get } from '@nestjs/common';
 import { BookmarkService } from './bookmark.service';
 import { IRequest } from '../common/interface/request.interface';
 import { AuthPrivate } from '../common/auth.decorator';
@@ -25,5 +25,15 @@ export class BookmarkController {
   @Delete()
   async remove(@Param('postId') postId: number, @Request() req: IRequest) {
     return this.bookmarkService.remove(req.user.id, postId);
+  }
+
+  @AuthPrivate({
+    summary: 'List my bookmarks',
+    responseStatus: 200,
+    responseDesc: 'List user bookmarks successfully',
+  })
+  @Get()
+  async listMine(@Request() req: IRequest) {
+    return this.bookmarkService.listByUser(req.user.id);
   }
 }

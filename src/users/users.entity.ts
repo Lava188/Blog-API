@@ -23,9 +23,11 @@ export class User {
   @Column({ nullable: true }) avatar?: string;
   @Column({ nullable: true }) bio?: string;
   @Column({ unique: true }) email: string;
-  @Column() password?: string;
+  @Column({ select: false }) password?: string;
   @Column({ type: 'enum', enum: Role, default: Role.USER }) role: Role;
   @Column({ type: 'enum', enum: Status, default: Status.INACTIVE }) status: Status;
+  @Column({ default: false }) isBanned: boolean;
+  @Column({ type: 'timestamp', nullable: true }) bannedAt?: Date | null;
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user) bookmarks: Bookmark[];
   @OneToMany(() => Post, (post) => post.author) posts: Post[];
   @OneToMany(() => Comment, (comment) => comment.author) comments: Comment[];

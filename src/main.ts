@@ -4,10 +4,18 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
+  app.use(helmet());
+  app.use(compression());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

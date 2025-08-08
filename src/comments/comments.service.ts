@@ -90,7 +90,7 @@ export class CommentsService {
     let comments = await this.cacheManager.get<Comment[]>(cacheKey);
     if (!comments) {
       comments = await this.commentsRepo.find({ where: { postId } });
-      await this.cacheManager.set(cacheKey, comments, 60);
+      await this.cacheManager.set(cacheKey, comments, 60_000);
     }
     return comments;
   }

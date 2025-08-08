@@ -13,6 +13,13 @@ import { Comment } from '../comments/comments.entity';
 import { Like } from '../likes/likes.entity';
 import { Bookmark } from '../bookmark/bookmark.entity';
 
+export enum PostStatus {
+  DRAFT = 'draft',
+  PENDING = 'pending',
+  PUBLISHED = 'published',
+  REJECTED = 'rejected',
+}
+
 @Entity('posts')
 export class Post {
   @PrimaryGeneratedColumn() id: number;
@@ -43,6 +50,15 @@ export class Post {
 
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   bookmarks: Bookmark[];
+
+  @Column({ type: 'enum', enum: PostStatus, default: PostStatus.PENDING })
+  status: PostStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  publishedAt?: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  moderationComment?: string | null; // reason for moderation
 
   @CreateDateColumn()
   createdAt: Date;

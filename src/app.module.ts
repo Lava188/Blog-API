@@ -17,6 +17,8 @@ import { LoggerMiddleware } from './common/logger.middleware';
 import { typeOrmConfig } from './common/database.config';
 import { EmailController } from './email/email.controller';
 import { EmailModule } from './email/email.module';
+import { redisStore } from 'cache-manager-redis-yet';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -33,10 +35,25 @@ import { EmailModule } from './email/email.module';
     LikesModule,
     BookmarkModule,
     NotificationsModule,
-    CacheModule.register({
+    ReportsModule,
+    CacheModule.registerAsync({
       isGlobal: true,
-      ttl: 5,
-      max: 100,
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        const ttlMs = Number(config.get<string>('CACHE_TTL_MS') ?? '60000');
+        if (redisUrl) {
+          return {
+            store: await redisStore({ url: redisUrl }),
+            ttl: ttlMs,
+            max: 1000,
+          } as any;
+        }
+        return {
+          ttl: ttlMs,
+          max: 100,
+        };
+      },
     }),
     ThrottlerModule.forRoot([
       {
