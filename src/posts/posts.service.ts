@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Post } from './posts.entity';
+import { Post, PostStatus } from './posts.entity';
 import { EditPostDto } from './dto/edit-post.dto';
 import { Role } from '../users/users.entity';
 import { User } from '../users/users.entity';
@@ -14,6 +14,7 @@ import { LikeDto } from '../likes/dto/like.dto';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PostsService {
@@ -23,6 +24,7 @@ export class PostsService {
     @InjectRepository(Like)
     private readonly likesRepository: Repository<Like>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly notificationService: NotificationsService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: number, image?: Express.Multer.File) {
@@ -41,6 +43,7 @@ export class PostsService {
       ...createPostDto,
       authorId: userId,
       image: imagePath,
+      status: PostStatus.PENDING,
     });
     await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);
@@ -48,7 +51,7 @@ export class PostsService {
 
   async likePost(postId: number, userId: number): Promise<LikeDto> {
     // Check if the post exists in the database
-    const post = await this.postRepository.findOne({ where: { id: postId } });
+    const post = await this.postRepository.findOne({ where: { id: postId }, relations: ['author'] });
     if (!post) {
       throw new NotFoundException(`Post with id ${postId} not found`);
     }
@@ -65,6 +68,9 @@ export class PostsService {
       // If the user has not liked the post, create a new like
       const newLike = this.likesRepository.create({ post: { id: postId }, user: { id: userId } });
       await this.likesRepository.save(newLike);
+      if (post.author.id !== userId) {
+        await this.notificationService.create(post.author, 'like', `User ${userId} liked post "${post.title}"`);
+      }
       return { message: 'Post liked' };
     }
   }
@@ -78,19 +84,31 @@ export class PostsService {
   }
 
   async update(id: number, editPostDto: EditPostDto, user: User) {
-    const post = await this.findOne(id);
+    const post = await this.getPostById(id);
 
     if (post.authorId !== user.id && user.role !== Role.ADMIN) {
       throw new ForbiddenException('You do not have permission to edit this post');
     }
 
-    Object.assign(post, editPostDto);
+    if (user.role !== Role.ADMIN) {
+      const { title, content } = editPostDto;
+      Object.assign(post, { title, content });
+    } else {
+      Object.assign(post, editPostDto);
+      if (editPostDto.status === PostStatus.PUBLISHED) {
+        post.publishedAt = post.publishedAt ?? new Date();
+      }
+      if (editPostDto.status === PostStatus.REJECTED) {
+        post.publishedAt = null;
+      }
+    }
+
     await this.cacheManager.del('all_posts');
     return this.postRepository.save(post);
   }
 
   async remove(id: number, user: User) {
-    const post = await this.findOne(id);
+    const post = await this.getPostById(id);
 
     if (post.authorId !== user.id && user.role !== Role.ADMIN) {
       throw new ForbiddenException('You do not have permission to delete this post');
@@ -107,7 +125,7 @@ export class PostsService {
 
     if (!posts) {
       posts = await this.postRepository.find();
-      await this.cacheManager.set(cacheKey, posts, 60);
+      await this.cacheManager.set(cacheKey, posts, 60_000);
     }
 
     return posts;
@@ -131,15 +149,5 @@ export class PostsService {
       page,
       lastPage: Math.ceil(total / limit),
     };
-  }
-
-  private async findOne(id: number) {
-    const post = await this.postRepository.findOne({
-      where: { id },
-    });
-    if (!post) {
-      throw new NotFoundException('Post not found');
-    }
-    return post;
   }
 }

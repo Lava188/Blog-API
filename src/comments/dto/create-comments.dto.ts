@@ -8,7 +8,7 @@ export class CreateCommentDto {
   @IsInt()
   @IsOptional()
   parentCommentId?: number;
-  
+
   @IsString()
   @IsNotEmpty()
   content: string;

@@ -1,5 +1,18 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete, Request, UseInterceptors, UploadedFile, ParseFilePipe, FileTypeValidator, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
+  Query,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { EditPostDto } from './dto/edit-post.dto';
@@ -12,6 +25,7 @@ import { GetDisLikePostDto, GetLikePostDto } from './dto/get-like-post.dto';
 import { Throttle } from '@nestjs/throttler';
 import { AuthPrivate, AuthPublic } from '../common/auth.decorator';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { PostStatus } from './posts.entity';
 
 @Throttle({ default: { limit: 5, ttl: 60000 } })
 @Controller('posts')
@@ -29,12 +43,12 @@ export class PostsController {
     @Body() createPostDto: CreatePostDto,
     @UploadedFile(
       new ParseFilePipe({
-          validators: [
-              new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|bmp|webp)$/ })
-          ],
-      })
-  ) image: Express.Multer.File, 
-  @Request() req: IRequest) {
+        validators: [new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|bmp|webp)$/ })],
+      }),
+    )
+    image: Express.Multer.File,
+    @Request() req: IRequest,
+  ) {
     try {
       return await this.postsService.create(createPostDto, Number(req.user.id), image);
     } catch (err) {
@@ -85,6 +99,30 @@ export class PostsController {
   @Patch(':id')
   updatePost(@Param('id') id: number, @Body() editPostDto: EditPostDto, @Request() req: IRequest) {
     return this.postsService.update(id, editPostDto, req.user as User);
+  }
+
+  @AuthPrivate({
+    summary: 'Approve a post (admin only)',
+    responseStatus: 200,
+    responseDesc: 'Approve a post successfully',
+    roles: [Role.ADMIN],
+  })
+  @Patch(':id/approve')
+  approvePost(@Param('id') id: number, @Request() req: IRequest) {
+    const dto: EditPostDto = { status: PostStatus.PUBLISHED };
+    return this.postsService.update(id, dto, req.user as User);
+  }
+
+  @AuthPrivate({
+    summary: 'Reject a post (admin only)',
+    responseStatus: 200,
+    responseDesc: 'Reject a post successfully',
+    roles: [Role.ADMIN],
+  })
+  @Patch(':id/reject')
+  rejectPost(@Param('id') id: number, @Body('reason') reason: string, @Request() req: IRequest) {
+    const dto: EditPostDto = { status: PostStatus.REJECTED, moderationComment: reason };
+    return this.postsService.update(id, dto, req.user as User);
   }
 
   @AuthPrivate({

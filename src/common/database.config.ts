@@ -5,6 +5,8 @@ import { Post } from '../posts/posts.entity';
 import { Comment } from '../comments/comments.entity';
 import { Like } from '../likes/likes.entity';
 import { Bookmark } from '../bookmark/bookmark.entity';
+import { ActivityLog } from '../users/activity-log.entity';
+import { Notification } from '../notifications/notifications.entity';
 
 export const typeOrmConfig = (config: ConfigService): TypeOrmModuleOptions => ({
   type: 'mysql',
@@ -13,7 +15,7 @@ export const typeOrmConfig = (config: ConfigService): TypeOrmModuleOptions => ({
   username: config.get<string>('DB_USERNAME') ?? '',
   password: config.get<string>('DB_PASSWORD') ?? '',
   database: config.get<string>('DB_DATABASE'),
-  entities: [User, Post, Comment, Like, Bookmark],
+  entities: [User, Post, Comment, Like, Bookmark, ActivityLog, Notification],
   autoLoadEntities: true,
   synchronize: true,
 });

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from './comments.entity';
-import { User } from '../users/users.entity';
+import { Role, User } from '../users/users.entity';
 import { CreateCommentDto } from './dto/create-comments.dto';
 import { EditCommentDto } from './dto/edit-comments.dto';
 import { Like } from '../likes/likes.entity';
@@ -10,6 +10,8 @@ import { LikeDto } from '../likes/dto/like.dto';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PostsService } from '../posts/posts.service';
 
 @Injectable()
 export class CommentsService {
@@ -19,6 +21,8 @@ export class CommentsService {
     @InjectRepository(Like)
     private readonly likesRepo: Repository<Like>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly notificationService: NotificationsService,
+    private readonly postsService: PostsService,
   ) {}
 
   async create(postId: number, dto: CreateCommentDto, user: User): Promise<Comment> {
@@ -27,6 +31,14 @@ export class CommentsService {
       postId,
       authorId: user.id,
     });
+    const post = await this.postsService.getPostById(postId);
+    if (post.authorId != user.id) {
+      await this.notificationService.create(
+        post.author, // recipient
+        'comment',
+        `User ${comment.author} vừa bình luận vào bài viết "${post.title}"`,
+      );
+    }
     await this.cacheManager.del(`comments_post_${postId}`);
     return this.commentsRepo.save(comment);
   }
@@ -78,7 +90,7 @@ export class CommentsService {
     let comments = await this.cacheManager.get<Comment[]>(cacheKey);
     if (!comments) {
       comments = await this.commentsRepo.find({ where: { postId } });
-      await this.cacheManager.set(cacheKey, comments, 60);
+      await this.cacheManager.set(cacheKey, comments, 60_000);
     }
     return comments;
   }
@@ -92,7 +104,7 @@ export class CommentsService {
   async update(id: number, dto: EditCommentDto, user: User): Promise<Comment> {
     const comment = await this.findOne(id);
 
-    if (comment.authorId !== user.id) {
+    if (comment.authorId !== user.id && user.role !== Role.ADMIN) {
       throw new ForbiddenException(`You can only edit your own comments.`);
     }
     comment.content = dto.content ?? comment.content;
@@ -103,7 +115,7 @@ export class CommentsService {
   async remove(id: number, user: User): Promise<void> {
     const comment = await this.findOne(id);
 
-    if (comment.authorId !== user.id) {
+    if (comment.authorId !== user.id && user.role !== Role.ADMIN) {
       throw new ForbiddenException(`You can only delete your own comments.`);
     }
 

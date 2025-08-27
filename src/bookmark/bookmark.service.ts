@@ -58,4 +58,12 @@ export class BookmarkService {
 
     return { message: 'Bookmark removed successfully' };
   }
+
+  async listByUser(userId: number) {
+    return this.bookmarkRepository.find({
+      where: { user: { id: userId } },
+      relations: ['post'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

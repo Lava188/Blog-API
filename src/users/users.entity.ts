@@ -19,13 +19,21 @@ export enum Status {
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn() id: number;
+  @Column() name: string;
+  @Column({ nullable: true }) avatar?: string;
+  @Column({ nullable: true }) bio?: string;
   @Column({ unique: true }) email: string;
-  @Column() password?: string;
+  @Column({ select: false }) password?: string;
   @Column({ type: 'enum', enum: Role, default: Role.USER }) role: Role;
+  @Column({ type: 'enum', enum: Status, default: Status.INACTIVE }) status: Status;
+  @Column({ default: false }) isBanned: boolean;
+  @Column({ type: 'timestamp', nullable: true }) bannedAt?: Date | null;
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user) bookmarks: Bookmark[];
   @OneToMany(() => Post, (post) => post.author) posts: Post[];
   @OneToMany(() => Comment, (comment) => comment.author) comments: Comment[];
   @OneToMany(() => Like, (like) => like.post) likes: Like[];
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
+  @Column({ nullable: true }) resetPasswordToken?: string;
+  @Column({ nullable: true }) resetPasswordExpires?: Date;
 }
